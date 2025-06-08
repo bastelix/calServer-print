@@ -28,7 +28,7 @@ jobs:
           node-version: '20'
 
       - name: Install Node deps
-      run: npm install --prefix electron
+        run: npm install --prefix electron
 
       - name: Build Windows app
         run: npm run build --prefix electron
