@@ -30,10 +30,12 @@ jobs:
           node-version: '20'
 
       - name: Install Node deps
-        run: npm --prefix electron install
+        run: npm install
+        working-directory: ./electron
 
       - name: Build Electron app
-        run: npm --prefix electron run build
+        run: npm run build
+        working-directory: ./electron
 
       - name: Upload release
         uses: softprops/action-gh-release@v1
