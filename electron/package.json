@@ -1,0 +1,38 @@
+{
+  "name": "calserver-labeltool",
+  "version": "1.0.0",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "dev": "streamlit run app/main.py"
+  },
+  "build": {
+    "appId": "com.calserver.labeltool",
+    "productName": "calServer Labeltool",
+    "files": [
+      "app/",
+      "assets/",
+      "electron/",
+      "requirements.txt"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "mac": {
+      "target": "dmg"
+    }
+  },
+  "dependencies": {
+    "electron": "^28.0.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.0.0"
+  }
+}
