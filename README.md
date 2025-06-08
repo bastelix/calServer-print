@@ -74,3 +74,13 @@ Damit laesst sich der komplette Ablauf von der Datenerfassung bis zum fertigen E
 ## Lizenz
 
 Dieses Projekt steht unter der [MIT-Lizenz](LICENSE).
+Releases are also created automatically when pushing a tag (`v1.0.0`).
+
+## 🧪 Running Tests
+
+The project uses `pytest` for its test-suite. After installing the Python
+dependencies you can execute the tests via:
+
+```bash
+pytest
+```
