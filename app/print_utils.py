@@ -1,3 +1,5 @@
+"""Helpers for listing printers and printing images across platforms."""
+
 import platform
 from typing import List
 from PIL import Image
@@ -13,6 +15,8 @@ else:
 
 
 def list_printers() -> List[str]:
+    """Return a list of available printer names."""
+
     if platform.system() == 'Windows' and win32print:
         return [p[2] for p in win32print.EnumPrinters(2)]
     elif platform.system() in ('Linux', 'Darwin') and cups:
@@ -22,6 +26,12 @@ def list_printers() -> List[str]:
 
 
 def print_label(image: Image.Image, printer_name: str) -> None:
+    """Send the given image to ``printer_name``.
+
+    The implementation handles Windows and CUPS based systems. For other
+    platforms a ``RuntimeError`` is raised.
+    """
+
     if platform.system() == 'Windows' and win32print:
         import tempfile
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.bmp')

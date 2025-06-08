@@ -1,3 +1,5 @@
+"""Streamlit based user interface for printing calibration labels."""
+
 import json
 import streamlit as st
 from PIL import Image
@@ -8,6 +10,8 @@ from .print_utils import list_printers, print_label
 
 
 def main():
+    """Run the interactive Streamlit application."""
+
     st.title("calServer Labeltool")
 
     base_url = st.text_input("API Base URL", "https://calserver.example.com")
