@@ -31,6 +31,10 @@ Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschrift
    npm install
    cd ..
    ```
+   > **Hinweis:** Falls npm den Fehler `ENOENT` meldet, wird das Kommando meist
+   > im falschen Verzeichnis ausgefuehrt. Stelle sicher, dass du dich im
+   > `electron`-Ordner befindest oder dort eine `package.json` mit
+   > `npm init -y` erzeugst.
 
 ## ⚡ Lokaler Start (Streamlit)
 
