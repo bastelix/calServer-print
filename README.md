@@ -1,5 +1,9 @@
 # 💻 calServer Labeltool
 
+[![Build Windows Electron App](https://github.com/bastelix/calServer-print/actions/workflows/build-windows.yml/badge.svg)](https://github.com/bastelix/calServer-print/actions/workflows/build-windows.yml)
+[![Tests](https://github.com/bastelix/calServer-print/actions/workflows/tests.yml/badge.svg)](https://github.com/bastelix/calServer-print/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 calServer Labeltool is a small tool for generating device and calibration labels that include QR codes. It fetches data from a calServer API and allows printing the resulting labels directly from the browser or via the packaged desktop application.
 
 ## Projektumfang und Idee
