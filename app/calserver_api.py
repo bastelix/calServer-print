@@ -1,9 +1,39 @@
+"""Small wrapper around the calServer REST API."""
+
 import requests
 from typing import Any, Dict
 
 
-def fetch_calibration_data(base_url: str, username: str, password: str, api_key: str, filter_json: Dict[str, Any]) -> Dict[str, Any]:
-    """Fetch calibration data from calServer API."""
+def fetch_calibration_data(
+    base_url: str,
+    username: str,
+    password: str,
+    api_key: str,
+    filter_json: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Fetch calibration information from the API.
+
+    The function performs a ``GET`` request against ``/api/calibration`` and
+    returns the parsed JSON content of the response.
+
+    Parameters
+    ----------
+    base_url:
+        Base URL of the calServer instance.
+    username:
+        User name for authentication.
+    password:
+        Password for authentication.
+    api_key:
+        Additional API key to use.
+    filter_json:
+        JSON payload used as a query filter.
+
+    Returns
+    -------
+    dict
+        Parsed JSON content of the successful API response.
+    """
     params = {
         'username': username,
         'password': password,
