@@ -2,7 +2,7 @@
   "name": "calserver-labeltool",
   "version": "1.0.0",
   "description": "Streamlit-basierte Desktop-App zum Drucken von Kalibrierlabels mit QR-Code",
-  "author": "René Buske <rene@calhelp.de>",
+  "author": "René Buske <admin@calhelp.de>",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
