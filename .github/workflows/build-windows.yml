@@ -53,7 +53,7 @@ jobs:
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.event.inputs.version || github.ref_name }}
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || github.ref_name }}
           files: electron/release/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
