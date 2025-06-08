@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version Tag (e.g. v1.0.0)'
+        description: 'Version Tag (z. B. v1.0.0)'
         required: true
 
 jobs:
@@ -12,12 +12,12 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout Repository (über PAT)
+      - name: Checkout Repository (mit PAT)
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.GH_PAT }}
 
-      - name: Create Tag with PAT
+      - name: Create Git Tag
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
@@ -30,9 +30,7 @@ jobs:
           python-version: "3.10"
 
       - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -47,10 +45,29 @@ jobs:
         run: npm run build
         working-directory: electron
 
+      - name: ZIP Portable und Installer
+        run: |
+          Compress-Archive -Path electron/release/*portable.exe -DestinationPath electron/release/portable.zip
+          Compress-Archive -Path "electron/release/*Setup*.exe" -DestinationPath electron/release/installer.zip
+
+      - name: Read Changelog Section
+        id: changelog
+        run: |
+          $version="${{ github.event.inputs.version }}"
+          $changelog = Get-Content CHANGELOG.md -Raw
+          $section = ($changelog -split "# ")[1..100] | Where-Object { $_ -like "*$version*" } | Out-String
+          echo "release_notes<<EOF" >> $env:GITHUB_OUTPUT
+          echo "$section" >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.inputs.version }}
-          files: electron/release/**
+          name: calServer Labeltool ${{ github.event.inputs.version }}
+          body: ${{ steps.changelog.outputs.release_notes }}
+          files: |
+            electron/release/*.exe
+            electron/release/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
