@@ -1,16 +1,14 @@
-name: Build Electron App
+name: Build Windows Electron App
 
 on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+  build-windows:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
 
@@ -32,7 +30,7 @@ jobs:
       - name: Install Node deps
         run: npm install --prefix electron
 
-      - name: Build Electron app
+      - name: Build Windows app
         run: npm run build --prefix electron
 
       - name: Upload release
