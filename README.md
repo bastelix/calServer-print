@@ -78,6 +78,26 @@ npm run build
 
 Der Befehl erzeugt im Ordner `release/` Installationspakete fuer Windows, Linux und macOS. Beim Pushen eines Tags in der Form `v1.0.0` wird dieser Schritt automatisch in GitHub Actions ausgefuehrt.
 
+### Signieren und ZIP-Installer (Windows)
+
+Um die erzeugte `labeltool.exe` lokal ohne Warnmeldungen ausfuehren zu koennen,
+kann sie mit einem selbstsignierten Zertifikat signiert werden. Die folgenden
+Befehle werden in einer PowerShell ausgefuehrt:
+
+```powershell
+# Selbstsigniertes Codesign-Zertifikat erstellen
+$cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=Test Cert" -CertStoreLocation "cert:\CurrentUser\My"
+# Zertifikat als PFX exportieren (Thumbprint anpassen)
+Export-PfxCertificate -Cert "cert:\CurrentUser\My\$($cert.Thumbprint)" -FilePath cert\selfsign.pfx -Password (ConvertTo-SecureString -String "testpass" -Force -AsPlainText)
+
+# Signieren und ZIP erstellen
+./build-installer.ps1
+```
+
+Das Skript `build-installer.ps1` signiert die Datei `dist/labeltool.exe` mit dem
+vorher erzeugten Zertifikat und legt anschliessend `dist/labeltool.zip` als
+portables Paket an.
+
 ## Schritt-fuer-Schritt-Anleitung zum Testen
 
 1. **Server vorbereiten:** Stelle sicher, dass ein calServer mit gueltigen API-Zugangsdaten laeuft oder verwende Testendpunkte.
