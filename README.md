@@ -44,6 +44,8 @@ Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschrift
 
 ```bash
 streamlit run app/main.py
+# or
+python run.py
 ```
 
 Das Webinterface ist danach unter `http://localhost:8501` erreichbar.
@@ -59,6 +61,16 @@ npm start
 im Fenstermodus ausfuehren.
 
 ## ♻ Release Build
+
+The release packages depend on a bundled Python/Streamlit executable. Build it
+first using PyInstaller:
+
+```bash
+pip install pyinstaller
+pyinstaller --noconfirm --onefile --name labeltool --add-data "app;app" run.py
+```
+
+This creates `dist/labeltool.exe` which will be included in the Electron build.
 
 ```bash
 npm run build

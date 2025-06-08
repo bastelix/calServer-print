@@ -15,9 +15,14 @@
       "output": "release"
     },
     "files": [
-      "../app/**/*",
-      "../assets/**/*",
+      "../dist/labeltool.exe",
       "**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist/labeltool.exe",
+        "to": "labeltool.exe"
+      }
     ],
     "win": {
       "target": [

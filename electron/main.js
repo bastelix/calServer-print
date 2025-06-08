@@ -15,7 +15,12 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  const streamlit = spawn('streamlit', ['run', 'app/main.py']);
+  const exePath = path.join(__dirname, 'labeltool.exe');
+  const streamlit = spawn(exePath, [], {
+    detached: true,
+    stdio: 'ignore'
+  });
+  streamlit.unref();
   createWindow();
 
   app.on('activate', function () {
