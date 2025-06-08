@@ -10,8 +10,16 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    steps:
       - name: Checkout Repository
+        uses: actions/checkout@v3
+
+
+      - name: Install CUPS build dependencies for pycups
+        run: sudo apt-get update && sudo apt-get install -y libcups2-dev
+
+      - name: Install Python dependencies
+          pip install pytest -r requirements.txt
+
         uses: actions/checkout@v3
 
       - name: Set up Python
