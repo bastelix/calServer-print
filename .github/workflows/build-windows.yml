@@ -28,14 +28,15 @@ jobs:
           node-version: '20'
 
       - name: Install Node deps
-        run: npm install
+      run: npm install --prefix electron
 
       - name: Build Windows app
-        run: npm run build
+        run: npm run build --prefix electron
 
       - name: Upload release
         uses: softprops/action-gh-release@v1
         with:
-          files: release/**
+          files: electron/release/**
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
