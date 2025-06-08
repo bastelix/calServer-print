@@ -20,7 +20,11 @@
       "**/*"
     ],
     "win": {
-      "target": "nsis"
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
     }
   },
   "devDependencies": {
