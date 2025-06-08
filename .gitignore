@@ -2,3 +2,4 @@ __pycache__/
 release/
 node_modules/
 dist/
+cert/*.pfx
