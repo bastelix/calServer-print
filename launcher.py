@@ -7,7 +7,7 @@ Usage:
 Run this script directly to start the NiceGUI application.
 
 Environment:
-- Set APP_CONFIG to specify the application configuration file.
+- APP_CONFIG (optional): path to an application configuration file.
 
 Command-line arguments:
 --debug   Run in debug mode (more verbose logging)
@@ -29,8 +29,7 @@ def setup_logging(debug: bool):
 
 def check_environment():
     if not os.getenv("APP_CONFIG"):
-        logging.error("APP_CONFIG environment variable is not set.")
-        sys.exit(1)
+        logging.warning("APP_CONFIG environment variable is not set; using defaults.")
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Launch NiceGUI app.")
