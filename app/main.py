@@ -77,6 +77,36 @@ def main() -> None:
 
     # log window for detailed application messages
     log_window = ui.log(max_lines=100)
+    login_status: ui.label | None = None
+
+    def do_login() -> None:
+        nonlocal login_status
+        """Check login credentials and remember them."""
+        try:
+            log_window.push("Checking login...")
+            # store values so the user does not have to re-enter them
+            stored_login.update({
+                "base_url": base_url.value,
+                "username": username.value,
+                "password": password.value,
+                "api_key": api_key.value,
+                "filter_json": filter_json.value,
+            })
+            # try a simple request to verify the credentials
+            fetch_calibration_data(
+                base_url.value,
+                username.value,
+                password.value,
+                api_key.value,
+                json.loads(filter_json.value or "{}"),
+            )
+            login_status.set_text("Login successful")
+            ui.notify("Login successful", type="positive")
+            log_window.push("Login successful")
+        except Exception as e:  # pragma: no cover - UI only
+            login_status.set_text("Login failed")
+            log_window.push(f"Error: {e}")
+            ui.notify(str(e), type="negative")
 
     def fetch() -> None:
         nonlocal cal_data, current_image
@@ -134,8 +164,10 @@ def main() -> None:
 
     with card:
         with ui.row().classes("q-gutter-md"):
+            ui.button("Login", on_click=do_login).props("color=primary")
             ui.button("Fetch Data", on_click=fetch).props("color=primary")
             ui.button("Print", on_click=do_print).props("color=secondary")
+        login_status = ui.label("").classes("text-positive")
 
     ui.run(port=8080, show=False)
 
