@@ -45,7 +45,7 @@ Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschrift
 ```bash
 streamlit run app/main.py
 # or
-python run.py
+python launcher.py
 ```
 
 Das Webinterface ist danach unter `http://localhost:8501` erreichbar.
@@ -62,12 +62,13 @@ im Fenstermodus ausfuehren.
 
 ## ♻ Release Build
 
-The release packages depend on a bundled Python/Streamlit executable. Build it
-first using PyInstaller:
+The release packages depend on a bundled Python/Streamlit executable. For
+packaging a small launcher script (`launcher.py`) is used to start Streamlit in
+headless mode. Build it first using PyInstaller:
 
 ```bash
 pip install pyinstaller
-pyinstaller --noconfirm --onefile --name labeltool --add-data "app;app" run.py
+pyinstaller --noconfirm --onefile --name labeltool --add-data "app;app" launcher.py
 ```
 
 This creates `dist/labeltool.exe` which will be included in the Electron build.
