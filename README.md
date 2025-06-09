@@ -2,9 +2,10 @@
 
 [![Build Windows Electron App](https://github.com/bastelix/calServer-print/actions/workflows/build-windows.yml/badge.svg)](https://github.com/bastelix/calServer-print/actions/workflows/build-windows.yml)
 [![Tests](https://github.com/bastelix/calServer-print/actions/workflows/tests.yml/badge.svg)](https://github.com/bastelix/calServer-print/actions/workflows/tests.yml)
+[![Release](https://img.shields.io/github/v/release/bastelix/calServer-print?label=release)](https://github.com/bastelix/calServer-print/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-calServer Labeltool is a small tool for generating device and calibration labels that include QR codes. It fetches data from a calServer API and allows printing the resulting labels directly from the browser or via the packaged desktop application.
+calServer Labeltool ist ein kleines Werkzeug zum Erstellen von Geraete- und Kalibrierungsetiketten mit QR-Codes. Die benoetigten Daten werden ueber eine calServer-API abgerufen und die erzeugten Labels koennen direkt im Browser oder ueber die mitgelieferte Desktop-Anwendung gedruckt werden.
 
 ## Projektumfang und Idee
 
@@ -74,16 +75,17 @@ im Fenstermodus ausfuehren.
 
 ## ♻ Release Build
 
-The release packages depend on a bundled Python/NiceGUI executable. For
-packaging a small launcher script (`launcher.py`) is used to start NiceGUI in
-headless mode. Build it first using PyInstaller:
+Die Release-Pakete basieren auf einer gebuendelten Python/NiceGUI-Exe.
+Zum Verpacken wird das kleine Startskript (`launcher.py`) genutzt,
+welches NiceGUI im Headless-Modus startet. Dieses wird zunaechst mit
+PyInstaller erzeugt:
 
 ```bash
 pip install pyinstaller
 pyinstaller --noconfirm --onefile --noconsole --name labeltool --add-data "app;app" launcher.py
 ```
 
-This creates `dist/labeltool.exe` which will be included in the Electron build.
+Damit entsteht `dist/labeltool.exe`, das anschliessend in den Electron-Build uebernommen wird.
 
 ```bash
 npm run build
@@ -130,12 +132,12 @@ Damit laesst sich der komplette Ablauf von der Datenerfassung bis zum fertigen E
 ## Lizenz
 
 Dieses Projekt steht unter der [MIT-Lizenz](LICENSE).
-Releases are also created automatically when pushing a tag (`v1.0.0`).
+Releases werden ausserdem automatisch erzeugt, sobald ein Tag (`v1.0.0`) gepusht wird.
 
-## 🧪 Running Tests
+## 🧪 Tests ausfuehren
 
-The project uses `pytest` for its test-suite. After installing the Python
-dependencies you can execute the tests via:
+Fuer die Test-Suite kommt `pytest` zum Einsatz. Nach der Installation der
+Python-Abhaengigkeiten lassen sich die Tests wie folgt starten:
 
 ```bash
 pytest
