@@ -1,6 +1,8 @@
 """Helpers for listing printers and printing images across platforms."""
 
+import os
 import platform
+import tempfile
 from typing import List
 from PIL import Image
 
@@ -33,24 +35,30 @@ def print_label(image: Image.Image, printer_name: str) -> None:
     """
 
     if platform.system() == 'Windows' and win32print:
-        import tempfile
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.bmp')
-        image.save(tmp.name)
-        hPrinter = win32print.OpenPrinter(printer_name)
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.bmp') as tmp:
+            tmp_path = tmp.name
+        image.save(tmp_path)
         try:
-            hJob = win32print.StartDocPrinter(hPrinter, 1, ('Label', None, 'RAW'))
-            win32print.StartPagePrinter(hPrinter)
-            with open(tmp.name, 'rb') as f:
-                win32print.WritePrinter(hPrinter, f.read())
-            win32print.EndPagePrinter(hPrinter)
-            win32print.EndDocPrinter(hPrinter)
+            hPrinter = win32print.OpenPrinter(printer_name)
+            try:
+                hJob = win32print.StartDocPrinter(hPrinter, 1, ('Label', None, 'RAW'))
+                win32print.StartPagePrinter(hPrinter)
+                with open(tmp_path, 'rb') as f:
+                    win32print.WritePrinter(hPrinter, f.read())
+                win32print.EndPagePrinter(hPrinter)
+                win32print.EndDocPrinter(hPrinter)
+            finally:
+                win32print.ClosePrinter(hPrinter)
         finally:
-            win32print.ClosePrinter(hPrinter)
+            os.unlink(tmp_path)
     elif platform.system() in ('Linux', 'Darwin') and cups:
         conn = cups.Connection()
-        import tempfile
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
-        image.save(tmp.name)
-        conn.printFile(printer_name, tmp.name, 'Label', {})
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
+            tmp_path = tmp.name
+        image.save(tmp_path)
+        try:
+            conn.printFile(printer_name, tmp_path, 'Label', {})
+        finally:
+            os.unlink(tmp_path)
     else:
         raise RuntimeError('Unsupported OS or printing not configured')
