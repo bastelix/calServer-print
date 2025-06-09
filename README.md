@@ -35,6 +35,9 @@ Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschrift
    npm install
    cd ..
    ```
+   Node.js muss installiert sein, damit `npm` verfuegbar ist. Fehlt `npm`,
+   laesst sich Node.js ueber <https://nodejs.org/> oder per
+   `winget install OpenJS.NodeJS.LTS` nachinstallieren.
    > **Hinweis:** Falls npm den Fehler `ENOENT` meldet, wird das Kommando meist
    > im falschen Verzeichnis ausgefuehrt. Stelle sicher, dass du dich im
    > `electron`-Ordner befindest oder dort eine `package.json` mit
