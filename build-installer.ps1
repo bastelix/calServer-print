@@ -9,10 +9,12 @@ $timestamp = "http://timestamp.digicert.com"
 if (-not (Get-Command pyinstaller -ErrorAction SilentlyContinue)) {
   python -m pip install pyinstaller | Out-Null
 }
-pyinstaller --noconfirm --onefile --noconsole --name labeltool --add-data "app;app" launcher.py
+# call PyInstaller via the Python module to avoid PATH issues
+python -m PyInstaller --noconfirm --onefile --noconsole --name labeltool `
+  --add-data "app;app" launcher.py
 
 # sign executable with self-signed certificate
-if (Test-Path $cert -and Test-Path $exe) {
+if ((Test-Path $cert) -and (Test-Path $exe)) {
   & "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe" sign `
     /f $cert /p $password /tr $timestamp /td sha256 /fd sha256 `
     $exe
