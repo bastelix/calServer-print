@@ -36,7 +36,11 @@ def parse_args():
     parser.add_argument("--debug", action="store_true", help="Run in debug mode.")
     return parser.parse_args()
 
-if __name__ == "__main__":  # pragma: no cover - manual start
+# ``ui.run`` needs to be executed even when the script is started via
+# ``multiprocessing`` (e.g. when bundled with PyInstaller).  In such
+# cases the module name is ``"__mp_main__"``.  We therefore check for
+# both names here.
+if __name__ in {"__main__", "__mp_main__"}:  # pragma: no cover - manual start
     args = parse_args()
     setup_logging(args.debug)
     logging.info("Launcher started.")
