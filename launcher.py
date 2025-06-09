@@ -1,7 +1,49 @@
-"""Launcher used by packaged binaries to start the NiceGUI app."""
+"""Launcher used by packaged binaries to start the NiceGUI app.
 
+Dependencies:
+- app.main: Contains the main() function to start the application.
+
+Usage:
+Run this script directly to start the NiceGUI application.
+
+Environment:
+- Set APP_CONFIG to specify the application configuration file.
+
+Command-line arguments:
+--debug   Run in debug mode (more verbose logging)
+"""
+
+import logging
+import argparse
+import os
+import sys
 from app.main import main
 
+def setup_logging(debug: bool):
+    level = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+def check_environment():
+    if not os.getenv("APP_CONFIG"):
+        logging.error("APP_CONFIG environment variable is not set.")
+        sys.exit(1)
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Launch NiceGUI app.")
+    parser.add_argument("--debug", action="store_true", help="Run in debug mode.")
+    return parser.parse_args()
 
 if __name__ == "__main__":  # pragma: no cover - manual start
-    main()
+    args = parse_args()
+    setup_logging(args.debug)
+    logging.info("Launcher started.")
+    check_environment()
+    try:
+        main()
+    except Exception as e:
+        logging.exception(f"An error occurred while running the app: {e}")
+        sys.exit(1)
