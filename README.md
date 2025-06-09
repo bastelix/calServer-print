@@ -40,6 +40,12 @@ Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschrift
    > `electron`-Ordner befindest oder dort eine `package.json` mit
    > `npm init -y` erzeugst.
 
+4. Alternativ koennen alle Abhaengigkeiten in einem Schritt installiert
+   werden:
+   ```bash
+   ./setup.sh
+   ```
+
 ## ⚡ Lokaler Start (NiceGUI)
 
 ```bash
