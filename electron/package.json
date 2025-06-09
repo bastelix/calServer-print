@@ -19,8 +19,7 @@
       }
     ],
     "win": {
-      "target": ["nsis", "portable"],
-      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+      "target": ["nsis", "portable"]
     }
   },
   "dependencies": {
