@@ -32,36 +32,48 @@ def main() -> None:
     cal_data = {}
     current_image: Image.Image | None = None
 
-    base_url = ui.input(
-        "API Base URL",
-        value=stored_login.get("base_url", "https://calserver.example.com"),
+    # main card containing all form elements
+    card = ui.card().style(
+        "max-width: 420px; margin: 80px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.13);"
     )
-    username = ui.input("Username", value=stored_login.get("username", ""))
-    password = ui.input(
-        "Password", password=True, value=stored_login.get("password", "")
-    )
-    api_key = ui.input("API Key", password=True, value=stored_login.get("api_key", ""))
-    filter_json = ui.textarea(
-        "Filter JSON", value=stored_login.get("filter_json", "{}")
-    )
+    with card:
+        ui.label("calServer Labeltool").classes("text-h4 text-center q-mb-lg")
 
-    for ctrl in (base_url, username, password, api_key, filter_json):
-        if hasattr(ctrl, "classes"):
-            ctrl.classes("w-96")
-        else:  # pragma: no cover - compatibility fallback
-            ctrl.style("width: 24rem")
+        base_url = ui.input(
+            "API Base URL",
+            value=stored_login.get("base_url", "https://calserver.example.com"),
+        ).props("outlined").classes("q-mb-sm")
 
-    label_type = ui.radio(["Device", "Calibration"], value="Device")
+        username = ui.input("Username", value=stored_login.get("username", "")).props(
+            "outlined"
+        )
+
+        password = ui.input(
+            "Password", password=True, value=stored_login.get("password", "")
+        ).props("outlined")
+
+        api_key = ui.input(
+            "API Key", password=True, value=stored_login.get("api_key", "")
+        ).props("outlined")
+
+        filter_json = ui.textarea(
+            "Filter JSON", value=stored_login.get("filter_json", "{}")
+        ).props("outlined").classes("q-mb-md")
+
+        label_type = ui.radio(["Device", "Calibration"], value="Device").classes(
+            "q-mb-md"
+        )
+
+        printer_select = ui.select(options=list_printers()).classes("q-mb-md")
 
     label_img = ui.image("")
     # Older NiceGUI versions do not support the ``classes`` argument on
     # ``ui.image``.  We therefore add the tailwind class after creation if the
     # helper is available.
     if hasattr(label_img, "classes"):
-        label_img.classes("w-96")
+        label_img.classes("w-96 q-mt-md")
     else:  # pragma: no cover - compatibility fallback
-        label_img.style("width: 24rem")
-    printer_select = ui.select(options=list_printers())
+        label_img.style("width: 24rem; margin-top: 1rem")
 
     # log window for detailed application messages
     log_window = ui.log(max_lines=100)
@@ -120,8 +132,10 @@ def main() -> None:
             log_window.push(f"Print error: {e}")
             ui.notify(str(e), type="negative")
 
-    ui.button("Fetch Data", on_click=fetch)
-    ui.button("Print", on_click=do_print)
+    with card:
+        with ui.row().classes("q-gutter-md"):
+            ui.button("Fetch Data", on_click=fetch).props("color=primary")
+            ui.button("Print", on_click=do_print).props("color=secondary")
 
     ui.run(port=8080, show=False)
 
