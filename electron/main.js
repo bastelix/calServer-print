@@ -25,11 +25,13 @@ function createWindow() {
 
   child.unref();
 
-  waitOn({ resources: ["http://localhost:8501"], timeout: 15000 }, (err) => {
+  // Wait until the NiceGUI backend is available on its default port
+  waitOn({ resources: ["http://localhost:8080"], timeout: 15000 }, (err) => {
     if (err) {
-      console.error("Streamlit not available:", err);
+      console.error("NiceGUI not available:", err);
     } else {
-      win.loadURL("http://localhost:8501");
+      // Once ready load the actual application UI
+      win.loadURL("http://localhost:8080");
     }
   });
 }
