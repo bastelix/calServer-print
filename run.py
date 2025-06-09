@@ -1,11 +1,7 @@
-import streamlit.web.bootstrap
+"""Entry point for running the NiceGUI application."""
 
-STREAMLIT_ARGS = {
-    "flag_options": ["--server.headless=true"],
-    "script_path": "app/main.py",
-}
+from app.main import main
 
-streamlit.web.bootstrap.run(
-    STREAMLIT_ARGS["script_path"],
-    flag_options=STREAMLIT_ARGS["flag_options"],
-)
+
+if __name__ == "__main__":  # pragma: no cover - manual start
+    main()
