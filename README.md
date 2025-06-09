@@ -101,9 +101,12 @@ Export-PfxCertificate -Cert "cert:\CurrentUser\My\$($cert.Thumbprint)" -FilePath
 ./build-installer.ps1
 ```
 
-Das Skript `build-installer.ps1` signiert die Datei `dist/labeltool.exe` mit dem
-vorher erzeugten Zertifikat und legt anschliessend `dist/labeltool.zip` als
-portables Paket an.
+Das Skript `build-installer.ps1` erzeugt (falls noetig) mit PyInstaller die
+Datei `dist/labeltool.exe` und signiert sie mit dem zuvor erzeugten
+Zertifikat. Diese EXE wird spaeter vom Electron-Build (siehe Workflow
+"Build Windows Electron App") in das portable Paket integriert. Zudem legt
+das Skript ein einfaches ZIP `dist/labeltool.zip` mit der signierten Datei
+an.
 
 ## Schritt-fuer-Schritt-Anleitung zum Testen
 
