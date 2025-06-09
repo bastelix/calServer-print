@@ -6,6 +6,9 @@ import base64
 from PIL import Image
 from nicegui import ui
 
+# dictionary to keep login information during runtime
+stored_login: dict[str, str] = {}
+
 try:
     from .calserver_api import fetch_calibration_data
     from .label_templates import device_label, calibration_label
@@ -29,11 +32,18 @@ def main() -> None:
     cal_data = {}
     current_image: Image.Image | None = None
 
-    base_url = ui.input("API Base URL", value="https://calserver.example.com")
-    username = ui.input("Username")
-    password = ui.input("Password", password=True)
-    api_key = ui.input("API Key", password=True)
-    filter_json = ui.textarea("Filter JSON", value="{}")
+    base_url = ui.input(
+        "API Base URL",
+        value=stored_login.get("base_url", "https://calserver.example.com"),
+    )
+    username = ui.input("Username", value=stored_login.get("username", ""))
+    password = ui.input(
+        "Password", password=True, value=stored_login.get("password", "")
+    )
+    api_key = ui.input("API Key", password=True, value=stored_login.get("api_key", ""))
+    filter_json = ui.textarea(
+        "Filter JSON", value=stored_login.get("filter_json", "{}")
+    )
 
     for ctrl in (base_url, username, password, api_key, filter_json):
         if hasattr(ctrl, "classes"):
@@ -53,9 +63,20 @@ def main() -> None:
         label_img.style("width: 24rem")
     printer_select = ui.select(options=list_printers())
 
+    # log window for detailed application messages
+    log_window = ui.log(max_lines=100)
+
     def fetch() -> None:
         nonlocal cal_data, current_image
         try:
+            log_window.push("Fetching data...")
+            stored_login.update({
+                "base_url": base_url.value,
+                "username": username.value,
+                "password": password.value,
+                "api_key": api_key.value,
+                "filter_json": filter_json.value,
+            })
             data = fetch_calibration_data(
                 base_url.value,
                 username.value,
@@ -65,14 +86,17 @@ def main() -> None:
             )
             cal_data = data
             ui.notify("Data loaded", type="positive")
+            log_window.push("Data loaded successfully")
             update_label()
         except Exception as e:  # pragma: no cover - UI only
+            log_window.push(f"Error: {e}")
             ui.notify(str(e), type="negative")
 
     def update_label() -> None:
         nonlocal current_image
         if not cal_data:
             return
+        log_window.push(f"Render label: {label_type.value}")
         if label_type.value == "Device":
             name = cal_data.get("device_name", "Device")
             device_id = str(cal_data.get("device_id", ""))
@@ -89,9 +113,11 @@ def main() -> None:
         if not current_image:
             return
         try:
+            log_window.push(f"Printing on {printer_select.value}")
             print_label(current_image, printer_select.value)
             ui.notify("Printed", type="positive")
         except Exception as e:  # pragma: no cover - UI only
+            log_window.push(f"Print error: {e}")
             ui.notify(str(e), type="negative")
 
     ui.button("Fetch Data", on_click=fetch)
