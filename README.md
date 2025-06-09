@@ -59,9 +59,9 @@ Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschrift
 ## ⚡ Lokaler Start (NiceGUI)
 
 ```bash
-python app/main.py
+python -m app.main
 # or
-python launcher.py
+python run.py
 ```
 
 Das Webinterface ist danach unter `http://localhost:8080` erreichbar.

@@ -6,9 +6,14 @@ import base64
 from PIL import Image
 from nicegui import ui
 
-from .calserver_api import fetch_calibration_data
-from .label_templates import device_label, calibration_label
-from .print_utils import list_printers, print_label
+try:
+    from .calserver_api import fetch_calibration_data
+    from .label_templates import device_label, calibration_label
+    from .print_utils import list_printers, print_label
+except ImportError:  # pragma: no cover - allow running as script
+    from calserver_api import fetch_calibration_data
+    from label_templates import device_label, calibration_label
+    from print_utils import list_printers, print_label
 
 
 def _pil_to_data_url(image: Image.Image) -> str:
@@ -32,7 +37,14 @@ def main() -> None:
 
     label_type = ui.radio(["Device", "Calibration"], value="Device")
 
-    label_img = ui.image("", classes="w-96")
+    label_img = ui.image("")
+    # Older NiceGUI versions do not support the ``classes`` argument on
+    # ``ui.image``.  We therefore add the tailwind class after creation if the
+    # helper is available.
+    if hasattr(label_img, "classes"):
+        label_img.classes("w-96")
+    else:  # pragma: no cover - compatibility fallback
+        label_img.style("width: 24rem")
     printer_select = ui.select(options=list_printers())
 
     def fetch() -> None:
