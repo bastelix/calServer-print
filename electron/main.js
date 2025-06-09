@@ -4,6 +4,22 @@ const path = require("path");
 const isDev = require("electron-is-dev");
 const waitOn = require("wait-on");
 
+let childProcess;
+
+function terminateChild() {
+  if (!childProcess) {
+    return;
+  }
+
+  if (process.platform === "win32") {
+    spawn("taskkill", ["/pid", childProcess.pid, "/T", "/F"]);
+  } else {
+    childProcess.kill("SIGTERM");
+  }
+
+  childProcess = undefined;
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1024,
@@ -17,13 +33,13 @@ function createWindow() {
     ? path.join(__dirname, "..", "dist", "labeltool.exe")
     : path.join(process.resourcesPath, "labeltool.exe");
 
-  const child = spawn(exePath, [], {
+  childProcess = spawn(exePath, [], {
     detached: true,
     stdio: "ignore",
     windowsHide: true
   });
 
-  child.unref();
+  childProcess.unref();
 
   // Wait until the NiceGUI backend is available on its default port
   waitOn({ resources: ["http://localhost:8080"], timeout: 15000 }, (err) => {
@@ -40,3 +56,12 @@ function createWindow() {
 }
 
 app.whenReady().then(createWindow);
+
+app.on("before-quit", terminateChild);
+
+app.on("window-all-closed", () => {
+  terminateChild();
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
+});
