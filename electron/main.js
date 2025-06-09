@@ -32,7 +32,9 @@ function createWindow() {
     } else {
       // Once ready load the actual application UI
       win.loadURL("http://localhost:8080");
-      win.webContents.openDevTools();
+      if (isDev) {
+        win.webContents.openDevTools();
+      }
     }
   });
 }
