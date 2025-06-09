@@ -65,11 +65,11 @@ class DummyFile:
 
 
 def test_print_label_windows_cleanup(monkeypatch):
-    print_utils = _load_print_utils()
+    pu = _load_print_utils()
     tmp = DummyTmp('win_tmp')
-    monkeypatch.setattr(print_utils.platform, 'system', lambda: 'Windows')
-    monkeypatch.setattr(print_utils.tempfile, 'NamedTemporaryFile', lambda delete=False, suffix='': tmp)
-    monkeypatch.setattr(print_utils, 'win32print', types.SimpleNamespace(
+    monkeypatch.setattr(pu.platform, 'system', lambda: 'Windows')
+    monkeypatch.setattr(pu.tempfile, 'NamedTemporaryFile', lambda delete=False, suffix='': tmp)
+    monkeypatch.setattr(pu, 'win32print', types.SimpleNamespace(
         OpenPrinter=lambda p: 'h',
         StartDocPrinter=lambda h, lvl, info: None,
         StartPagePrinter=lambda h: None,
@@ -79,27 +79,27 @@ def test_print_label_windows_cleanup(monkeypatch):
         ClosePrinter=lambda h: None,
     ), raising=False)
     unlinked = []
-    monkeypatch.setattr(print_utils.os, 'unlink', lambda path: unlinked.append(path))
+    monkeypatch.setattr(pu.os, 'unlink', lambda path: unlinked.append(path))
     monkeypatch.setattr('builtins.open', lambda *args, **kwargs: DummyFile())
 
-    print_utils.print_label(DummyImage(), 'dummy')
+    pu.print_label(DummyImage(), 'dummy')
 
     assert tmp.closed
     assert unlinked == [tmp.name]
 
 
 def test_print_label_cups_cleanup(monkeypatch):
-    print_utils = _load_print_utils()
+    pu = _load_print_utils()
     tmp = DummyTmp('cups_tmp')
-    monkeypatch.setattr(print_utils.platform, 'system', lambda: 'Linux')
-    monkeypatch.setattr(print_utils.tempfile, 'NamedTemporaryFile', lambda delete=False, suffix='': tmp)
-    monkeypatch.setattr(print_utils, 'cups', types.SimpleNamespace(
+    monkeypatch.setattr(pu.platform, 'system', lambda: 'Linux')
+    monkeypatch.setattr(pu.tempfile, 'NamedTemporaryFile', lambda delete=False, suffix='': tmp)
+    monkeypatch.setattr(pu, 'cups', types.SimpleNamespace(
         Connection=lambda: types.SimpleNamespace(printFile=lambda *a, **kw: None)
     ))
     unlinked = []
-    monkeypatch.setattr(print_utils.os, 'unlink', lambda path: unlinked.append(path))
+    monkeypatch.setattr(pu.os, 'unlink', lambda path: unlinked.append(path))
 
-    print_utils.print_label(DummyImage(), 'dummy')
+    pu.print_label(DummyImage(), 'dummy')
 
     assert tmp.closed
     assert unlinked == [tmp.name]
