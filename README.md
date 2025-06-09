@@ -8,7 +8,7 @@ calServer Labeltool is a small tool for generating device and calibration labels
 
 ## Projektumfang und Idee
 
-Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschriftungen zu vereinfachen. Die Anwendung besteht aus einem Streamlit-Webinterface und kann mit Electron zu einer Desktop-App gebuendelt werden. Sie kommuniziert mit einem bestehenden **calServer**-Backend, um die noetigen Informationen abzurufen und daraus Etiketten mit QR-Codes zu erzeugen.
+Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschriftungen zu vereinfachen. Die Anwendung besteht aus einem NiceGUI-Webinterface und kann mit Electron zu einer Desktop-App gebuendelt werden. Sie kommuniziert mit einem bestehenden **calServer**-Backend, um die noetigen Informationen abzurufen und daraus Etiketten mit QR-Codes zu erzeugen.
 
 ## Features
 
@@ -40,15 +40,15 @@ Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschrift
    > `electron`-Ordner befindest oder dort eine `package.json` mit
    > `npm init -y` erzeugst.
 
-## ⚡ Lokaler Start (Streamlit)
+## ⚡ Lokaler Start (NiceGUI)
 
 ```bash
-streamlit run app/main.py
+python app/main.py
 # or
 python launcher.py
 ```
 
-Das Webinterface ist danach unter `http://localhost:8501` erreichbar.
+Das Webinterface ist danach unter `http://localhost:8080` erreichbar.
 
 ## ⚡ Start als Desktop-App
 
@@ -62,8 +62,8 @@ im Fenstermodus ausfuehren.
 
 ## ♻ Release Build
 
-The release packages depend on a bundled Python/Streamlit executable. For
-packaging a small launcher script (`launcher.py`) is used to start Streamlit in
+The release packages depend on a bundled Python/NiceGUI executable. For
+packaging a small launcher script (`launcher.py`) is used to start NiceGUI in
 headless mode. Build it first using PyInstaller:
 
 ```bash
@@ -102,8 +102,8 @@ portables Paket an.
 ## Schritt-fuer-Schritt-Anleitung zum Testen
 
 1. **Server vorbereiten:** Stelle sicher, dass ein calServer mit gueltigen API-Zugangsdaten laeuft oder verwende Testendpunkte.
-2. **Applikation starten:** Entweder lokal mit `streamlit run app/main.py` oder als Electron-App mit `npm start`.
-3. **Weboberflaeche oeffnen:** Browser oeffnen und `http://localhost:8501` aufrufen (bei der Desktop-App oeffnet sich automatisch ein Fenster).
+2. **Applikation starten:** Entweder lokal mit `python app/main.py` oder als Electron-App mit `npm start`.
+3. **Weboberflaeche oeffnen:** Browser oeffnen und `http://localhost:8080` aufrufen (bei der Desktop-App oeffnet sich automatisch ein Fenster).
 4. **Zugangsdaten eingeben:** API-Basis-URL, Benutzername, Passwort und API-Key ausfuellen. Optional kann ein JSON-Filter angegeben werden, um bestimmte Daten zu laden.
 5. **Labeltyp waehlen:** Zwischen "Device" und "Calibration" entscheiden.
 6. **Daten abrufen:** Button **Fetch Data** betaetigen. Bei Erfolg erscheinen die geladenen Daten.
