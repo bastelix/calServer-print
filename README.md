@@ -45,6 +45,12 @@ Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschrift
    ```bash
    ./setup.sh
    ```
+5. Windows-Nutzer koennen stattdessen die WinGet-Konfiguration nutzen,
+   um Python, Node.js, Visual Studio Code und saemtliche
+   Projektabhaengigkeiten automatisch einzurichten:
+   ```powershell
+   winget configure --file install-windows.yaml
+   ```
 
 ## ⚡ Lokaler Start (NiceGUI)
 
