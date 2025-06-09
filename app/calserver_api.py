@@ -35,9 +35,9 @@ def fetch_calibration_data(
         Parsed JSON content of the successful API response.
     """
     params = {
-        'username': username,
-        'password': password,
-        'api_key': api_key,
+        'HTTP_X_REST_USERNAME': username,
+        'HTTP_X_REST_PASSWORD': password,
+        'HTTP_X_REST_API_KEY': api_key,
     }
     url = f"{base_url.rstrip('/')}/api/calibration"
     response = requests.get(url, params=params, json=filter_json, timeout=10)

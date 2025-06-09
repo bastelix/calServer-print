@@ -13,6 +13,7 @@ class DummyResponse:
     def json(self):
         return self._data
 
+
 def dummy_get(url, params=None, json=None, timeout=10):
     return DummyResponse({"result": "ok", "params": params, "json": json})
 
@@ -31,5 +32,5 @@ def test_fetch_calibration_data():
         {"foo": 1},
     )
     assert data["result"] == "ok"
-    assert data["params"]["username"] == "user"
+    assert data["params"]["HTTP_X_REST_USERNAME"] == "user"
     assert data["json"] == {"foo": 1}
