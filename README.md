@@ -18,6 +18,8 @@ Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschrift
 - Generierung von QR-Codes
 - Ausgabe auf beliebigen lokalen Druckern
 - Optionale Nutzung als Electron-Desktop-Anwendung
+- Ausführliches Logfenster zur Fehlerdiagnose
+- Temporäres Speichern der eingegebenen Login-Daten
 
 ## Installation
 
