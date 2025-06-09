@@ -7,21 +7,33 @@ from typing import List
 from PIL import Image
 
 
-if platform.system() == 'Windows':
-    import win32print
-elif platform.system() in ('Linux', 'Darwin'):
-    import cups
-else:
-    win32print = None
-    cups = None
+win32print = None
+cups = None
+
+if platform.system() == "Windows":
+    try:  # pragma: no cover - optional dependency may be missing
+        import win32print as _win32print
+        win32print = _win32print
+    except ImportError:  # pragma: no cover - handled below
+        win32print = None
+elif platform.system() in ("Linux", "Darwin"):
+    try:  # pragma: no cover - optional dependency may be missing
+        import cups as _cups
+        cups = _cups
+    except ImportError:  # pragma: no cover - handled below
+        cups = None
 
 
 def list_printers() -> List[str]:
     """Return a list of available printer names."""
 
-    if platform.system() == 'Windows' and win32print:
+    if platform.system() == "Windows":
+        if not win32print:
+            raise RuntimeError("win32print is required on Windows")
         return [p[2] for p in win32print.EnumPrinters(2)]
-    elif platform.system() in ('Linux', 'Darwin') and cups:
+    elif platform.system() in ("Linux", "Darwin"):
+        if not cups:
+            raise RuntimeError("cups is required on this platform")
         conn = cups.Connection()
         return list(conn.getPrinters().keys())
     return []
@@ -60,5 +72,6 @@ def print_label(image: Image.Image, printer_name: str) -> None:
             conn.printFile(printer_name, tmp_path, 'Label', {})
         finally:
             os.unlink(tmp_path)
+
     else:
-        raise RuntimeError('Unsupported OS or printing not configured')
+        raise RuntimeError("Unsupported OS or printing not configured")
