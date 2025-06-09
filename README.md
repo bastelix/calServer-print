@@ -74,7 +74,7 @@ headless mode. Build it first using PyInstaller:
 
 ```bash
 pip install pyinstaller
-pyinstaller --noconfirm --onefile --name labeltool --add-data "app;app" launcher.py
+pyinstaller --noconfirm --onefile --noconsole --name labeltool --add-data "app;app" launcher.py
 ```
 
 This creates `dist/labeltool.exe` which will be included in the Electron build.

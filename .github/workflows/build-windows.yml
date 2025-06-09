@@ -35,7 +35,7 @@ jobs:
       - name: Build Python executable
         run: |
           pip install pyinstaller
-          pyinstaller --noconfirm --onefile --name labeltool --add-data "app;app" launcher.py
+          pyinstaller --noconfirm --onefile --noconsole --name labeltool --add-data "app;app" launcher.py
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
