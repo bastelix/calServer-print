@@ -79,7 +79,7 @@ def main() -> None:
     ui.button("Fetch Data", on_click=fetch)
     ui.button("Print", on_click=do_print)
 
-    ui.run()
+    ui.run(port=8080, show=False)
 
 
 if __name__ == "__main__":  # pragma: no cover - manual start
