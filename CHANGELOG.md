@@ -1,5 +1,34 @@
 # Changelog
 
+# v1.0.15 - 2025-06-09
+- fix print utils test initialization
+- use default artifact naming
+
+# v1.0.14 - 2025-06-09
+- fix print_utils reference in tests
+- clean up spawned backend on exit
+- only open DevTools in development
+- handle missing print modules
+
+# v1.0.13 - 2025-06-09
+- integrate PyInstaller build step
+- open devtools after loading app
+
+# v1.0.12 - 2025-06-09
+- add setup script for dependencies
+- build portable and installer packages
+
+# v1.0.11 - 2025-06-09
+- fix Electron port so login dialog appears
+
+# v1.0.10 - 2025-06-09
+- switch UI to NiceGUI
+
+# v1.0.9 - 2025-06-09
+- add launcher script for packaging
+
+# v1.0.8 - 2025-06-09
+- wait for NiceGUI to start before loading
 # v1.0.7 - 2025-06-09
 - fix missing electron-is-dev dependency in packaged app
 
