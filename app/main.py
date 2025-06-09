@@ -35,6 +35,12 @@ def main() -> None:
     api_key = ui.input("API Key", password=True)
     filter_json = ui.textarea("Filter JSON", value="{}")
 
+    for ctrl in (base_url, username, password, api_key, filter_json):
+        if hasattr(ctrl, "classes"):
+            ctrl.classes("w-96")
+        else:  # pragma: no cover - compatibility fallback
+            ctrl.style("width: 24rem")
+
     label_type = ui.radio(["Device", "Calibration"], value="Device")
 
     label_img = ui.image("")
