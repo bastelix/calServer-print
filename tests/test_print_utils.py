@@ -65,6 +65,7 @@ class DummyFile:
 
 
 def test_print_label_windows_cleanup(monkeypatch):
+    print_utils = _load_print_utils()
     tmp = DummyTmp('win_tmp')
     monkeypatch.setattr(print_utils.platform, 'system', lambda: 'Windows')
     monkeypatch.setattr(print_utils.tempfile, 'NamedTemporaryFile', lambda delete=False, suffix='': tmp)
@@ -88,6 +89,7 @@ def test_print_label_windows_cleanup(monkeypatch):
 
 
 def test_print_label_cups_cleanup(monkeypatch):
+    print_utils = _load_print_utils()
     tmp = DummyTmp('cups_tmp')
     monkeypatch.setattr(print_utils.platform, 'system', lambda: 'Linux')
     monkeypatch.setattr(print_utils.tempfile, 'NamedTemporaryFile', lambda delete=False, suffix='': tmp)
