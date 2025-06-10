@@ -58,6 +58,20 @@ def _build_table_kwargs(table_func, rows: List[Dict[str, Any]], on_select) -> Di
     return kwargs
 
 
+def _navigate(path: str) -> None:
+    """Open the given path using the available NiceGUI API."""
+    if hasattr(ui, "open"):
+        ui.open(path)  # type: ignore[attr-defined]
+    elif hasattr(ui, "open_page"):
+        ui.open_page(path)  # pragma: no cover - legacy NiceGUI
+    elif hasattr(ui, "navigate") and hasattr(ui.navigate, "to"):
+        ui.navigate.to(path)  # pragma: no cover - future NiceGUI
+    elif hasattr(ui, "navigate"):
+        ui.navigate(path)  # pragma: no cover - future NiceGUI
+    else:  # pragma: no cover - missing method
+        raise AttributeError("No navigation method found in nicegui.ui")
+
+
 def main() -> None:
     """Run the NiceGUI label tool."""
 
@@ -103,7 +117,7 @@ def main() -> None:
                     "api_key": api_key.value,
                 }
             )
-            ui.open("/app")
+            _navigate("/app")
             push_status("Login successful")
         except Exception as e:  # pragma: no cover - UI only
             push_status(f"Login failed: {e}")
@@ -114,7 +128,7 @@ def main() -> None:
         stored_login.clear()
         selected_row = None
         current_image = None
-        ui.open("/")
+        _navigate("/")
 
     def fetch_data() -> None:
         nonlocal selected_row
