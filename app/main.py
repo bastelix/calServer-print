@@ -342,6 +342,22 @@ def main() -> None:
                     table_kwargs = _build_table_kwargs(ui.table, table_rows, on_select)
                     device_table = ui.table(**table_kwargs).classes("q-mt-md")
                     device_table.on("row-click", handle_row_click)
+                    device_table.add_slot(
+                        "body-cell-qrcode",
+                        """
+                        <q-td :props="props">
+                          <div v-html="props.value" />
+                        </q-td>
+                        """,
+                    )
+                    device_table.add_slot(
+                        "body-cell-preview",
+                        """
+                        <q-td :props="props">
+                          <div v-html="props.value" />
+                        </q-td>
+                        """,
+                    )
                     empty_table_label.visible = len(table_rows) == 0
                 with ui.column().classes("col-auto").style("min-width:320px"):
                     label_card = ui.card().style("padding:32px;min-height:260px;")
