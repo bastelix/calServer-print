@@ -271,8 +271,8 @@ def main() -> None:
                     table_kwargs = _build_table_kwargs(ui.table, table_rows, on_select)
                     device_table = ui.table(**table_kwargs).classes("q-mt-md")
                     empty_table_label.visible = len(table_rows) == 0
-                with ui.column().style("flex:2;min-width:320px"):
-                    label_card = ui.card().style("margin-left:32px;padding:32px;min-height:260px;")
+                with ui.column().classes("col-auto").style("min-width:320px"):
+                    label_card = ui.card().style("padding:32px;min-height:260px;")
                     with label_card:
                         ui.label("Label-Vorschau").classes("text-h6")
                         placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
