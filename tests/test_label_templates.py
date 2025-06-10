@@ -61,7 +61,11 @@ class DummyQR(DummyImage):
 def generate_qr_code(data, size=200):
     return DummyQR(data, size)
 
+def generate_qr_code_svg(data):
+    return '<svg></svg>'
+
 qr_mod.generate_qr_code = generate_qr_code
+qr_mod.generate_qr_code_svg = generate_qr_code_svg
 sys.modules["app.qrcode_utils"] = qr_mod
 
 label_templates = importlib.import_module("app.label_templates")
@@ -99,4 +103,4 @@ def test_device_label_svg_contents():
     assert "<svg" in svg
     assert "Gerät: Device" in svg
     assert "Ablauf: 2025-01-01" in svg
-    assert "data:image/png;base64" in svg
+    assert "<g" in svg
