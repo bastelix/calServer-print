@@ -30,6 +30,34 @@ def _pil_to_data_url(image: Image.Image) -> str:
     return f"data:image/png;base64,{data}"
 
 
+def _build_table_kwargs(table_func, rows: List[Dict[str, Any]], on_select) -> Dict[str, Any]:
+    """Return kwargs for ``ui.table`` with optional parameters."""
+
+    kwargs = dict(
+        columns=[
+            {"name": "I4201", "label": "Gerätename", "field": "I4201"},
+            {"name": "I4202", "label": "Hersteller", "field": "I4202"},
+            {"name": "I4203", "label": "Typ", "field": "I4203"},
+            {"name": "I4204", "label": "Beschreibung", "field": "I4204"},
+            {"name": "I4206", "label": "Seriennummer", "field": "I4206"},
+            {"name": "C2301", "label": "Kalibrierdatum", "field": "C2301"},
+            {"name": "C2303", "label": "Ablaufdatum", "field": "C2303"},
+        ],
+        rows=rows,
+        row_key="I4201",
+        on_select=on_select,
+    )
+
+    params = inspect.signature(table_func).parameters
+    if "pagination" in params:
+        kwargs["pagination"] = True
+    if "search" in params:
+        kwargs["search"] = True
+    if "rows_per_page" in params:
+        kwargs["rows_per_page"] = 10
+    return kwargs
+
+
 def main() -> None:
     """Run the NiceGUI label tool."""
 
@@ -170,25 +198,7 @@ def main() -> None:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
             with ui.row().classes("justify-center q-gutter-xl flex-wrap"):
                 with ui.column().style("flex:3;min-width:600px;max-width:900px"):
-                    table_kwargs = dict(
-                        columns=[
-                            {"name": "I4201", "label": "Gerätename", "field": "I4201"},
-                            {"name": "I4202", "label": "Hersteller", "field": "I4202"},
-                            {"name": "I4203", "label": "Typ", "field": "I4203"},
-                            {"name": "I4204", "label": "Beschreibung", "field": "I4204"},
-                            {"name": "I4206", "label": "Seriennummer", "field": "I4206"},
-                            {"name": "C2301", "label": "Kalibrierdatum", "field": "C2301"},
-                            {"name": "C2303", "label": "Ablaufdatum", "field": "C2303"},
-                        ],
-                        rows=table_rows,
-                        row_key="I4201",
-                        pagination=True,
-                        on_select=on_select,
-                    )
-                    if "search" in inspect.signature(ui.table).parameters:
-                        table_kwargs["search"] = True
-                    if "rows_per_page" in inspect.signature(ui.table).parameters:
-                        table_kwargs["rows_per_page"] = 10
+                    table_kwargs = _build_table_kwargs(ui.table, table_rows, on_select)
                     device_table = ui.table(**table_kwargs).classes("q-mt-md")
                     ui.button("Daten laden", on_click=fetch_data).props("color=primary").classes("q-mt-md")
                 with ui.column().style("flex:2;min-width:320px"):
