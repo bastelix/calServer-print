@@ -22,7 +22,7 @@ try:
         render_label_template,
     )
     from .qrcode_utils import generate_qr_code, generate_qr_code_svg
-    from .print_utils import print_label
+    from .print_utils import print_label, list_printers
 except ImportError:
     from calserver_api import fetch_calibration_data
     from label_templates import (
@@ -32,7 +32,7 @@ except ImportError:
         render_label_template,
     )
     from qrcode_utils import generate_qr_code, generate_qr_code_svg
-    from print_utils import print_label
+    from print_utils import print_label, list_printers
 
 
 def _pil_to_data_url(image: Image.Image) -> str:
@@ -103,6 +103,11 @@ def main() -> None:
     all_rows: List[Dict[str, Any]] = []
     selected_row: Dict[str, Any] | None = None
     current_image: Image.Image | None = None
+
+    # Printer selection
+    available_printers: List[str] = []
+    selected_printer: str | None = None
+    printer_select: ui.select | None = None
 
     # UI-Elemente
     status_log: ui.log | None = None
@@ -271,7 +276,7 @@ def main() -> None:
 
     # Label aktualisieren
     def update_label(row: Dict[str, Any] | None) -> None:
-        nonlocal current_image
+        nonlocal current_image, selected_printer
         if not row:
             label_svg.content = render_preview(selected_template, "", "", "")
             placeholder_label.visible = True
@@ -286,7 +291,10 @@ def main() -> None:
         current_image = device_label(name, expiry, qr_url)
         label_svg.content = render_preview(selected_template, name, expiry, qr_url)
         placeholder_label.visible = False
-        print_button.enable()
+        if selected_printer:
+            print_button.enable()
+        else:
+            print_button.disable()
 
 
     # Auswahl-Handler
@@ -334,20 +342,39 @@ def main() -> None:
         else:
             update_label(None)
 
+    def on_printer_change(e: Any) -> None:
+        nonlocal selected_printer, selected_row, print_button
+        if printer_select:
+            selected_printer = printer_select.value
+        if selected_row and selected_printer:
+            print_button.enable()
+        elif print_button:
+            print_button.disable()
+
     # Drucken
     def do_print() -> None:
-        if current_image:
-            try:
-                print_label(current_image, "")
-                push_status("Printed")
-            except Exception as e:
-                push_status(f"Print error: {e}")
+        nonlocal selected_printer
+        if not current_image or not selected_printer:
+            push_status("Bitte zuerst Datensatz und Drucker wählen")
+            return
+        try:
+            print_label(current_image, selected_printer)
+            push_status(f"Printed on: {selected_printer}")
+        except Exception as e:
+            push_status(f"Print error: {e}")
 
     # Main UI aufbauen
     def show_main_ui() -> None:
         nonlocal status_log, label_svg, print_button, placeholder_label, row_info_label
         nonlocal device_table, empty_table_label, filter_switch, search_input, label_dialog, dialog_label_svg
-        nonlocal template_select
+        nonlocal template_select, printer_select, available_printers, selected_printer
+
+        try:
+            available_printers = list_printers()
+        except Exception as e:
+            push_status(f"Error listing printers: {e}")
+            available_printers = []
+        selected_printer = available_printers[0] if available_printers else None
         with ui.column():
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
             search_input = ui.input("Gerätename suchen").props("outlined clearable").on("input", lambda e: apply_table_filter())
@@ -395,6 +422,11 @@ def main() -> None:
                         label_svg = ui.html(
                             render_preview(selected_template, "", "", "")
                         ).style("max-width:420px;border:1px solid #ccc;padding:4px;")
+                        printer_select = ui.select(
+                            options=available_printers,
+                            value=selected_printer,
+                            on_change=on_printer_change,
+                        ).classes("q-mb-md")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
         # Footer
