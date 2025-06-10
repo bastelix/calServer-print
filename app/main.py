@@ -454,23 +454,19 @@ def main() -> None:
                 ui.label('Log In').classes('block text-2xl font-semibold text-center mb-8 text-gray-800')
                 
                 # API URL
-                ui.label('API URL').classes('block font-medium text-sm text-gray-700 mb-1')
-                base_url = ui.input(placeholder='API URL', value=default_url).classes(
+                base_url = ui.input('API URL', value=default_url).classes(
                     'w-full rounded-md py-2.5 px-4 border border-gray-200 bg-gray-50 focus:border-[#f84525] text-sm outline-[#f84525] mb-4 transition')
                 
                 # Benutzername
-                ui.label('Benutzername').classes('block font-medium text-sm text-gray-700 mb-1')
-                username = ui.input(placeholder='E-Mail', value="api-demo@calhelp.de" if is_dev else "").classes(
+                username = ui.input('Benutzername', value="api-demo@calhelp.de" if is_dev else "").classes(
                     'w-full rounded-md py-2.5 px-4 border border-gray-200 bg-gray-50 focus:border-[#f84525] text-sm outline-[#f84525] mb-4 transition')
                 
                 # Passwort
-                ui.label('Passwort').classes('block font-medium text-sm text-gray-700 mb-1')
-                password = ui.input(placeholder='Passwort', password=True).classes(
+                password = ui.input('Passwort', password=True).classes(
                     'w-full rounded-md py-2.5 px-4 border border-gray-200 bg-gray-50 focus:border-[#f84525] text-sm outline-[#f84525] mb-4 transition')
                 # API Key
-                ui.label('API Key').classes('block font-medium text-sm text-gray-700 mb-1 mt-4')
-                api_key = ui.input(placeholder='API Key', password=True, value="53f1871505fa8190659aaae17845bd19" if is_dev else "").classes(
-                    'w-full rounded-md py-2.5 px-4 border border-gray-200 bg-gray-50 focus:border-[#f84525] text-sm outline-[#f84525] mb-4 transition')
+                api_key = ui.input('API Key', password=True, value="53f1871505fa8190659aaae17845bd19" if is_dev else "").classes(
+                    'w-full rounded-md py-2.5 px-4 mt-4 border border-gray-200 bg-gray-50 focus:border-[#f84525] text-sm outline-[#f84525] mb-4 transition')
                 
                 # Login-Button
                 ui.button("LOGIN", on_click=handle_login).classes(
