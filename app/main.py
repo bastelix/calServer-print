@@ -71,6 +71,7 @@ def main() -> None:
     print_button: ui.button | None = None
     label_card: ui.card | None = None
     device_table: ui.table | None = None
+    empty_table_label: ui.label | None = None
     main_layout: ui.column | None = None
     login_card: ui.card | None = None
     footer: ui.footer | None = None
@@ -101,6 +102,7 @@ def main() -> None:
             )
             login_card.visible = False
             show_main_ui()
+            fetch_data()
             push_status("Login successful")
         except Exception as e:  # pragma: no cover - UI only
             push_status(f"Login failed: {e}")
@@ -153,12 +155,16 @@ def main() -> None:
             selected_row = None
             if device_table:
                 device_table.update()
+            if empty_table_label:
+                empty_table_label.visible = len(table_rows) == 0
             push_status("Data loaded")
         except Exception as e:  # pragma: no cover - UI only
             push_status(f"Error fetching data: {e}")
             table_rows.clear()
             if device_table:
                 device_table.update()
+            if empty_table_label:
+                empty_table_label.visible = True
 
     def update_label(row: Dict[str, Any] | None) -> None:
         nonlocal current_image
@@ -192,14 +198,16 @@ def main() -> None:
             push_status(f"Print error: {e}")
 
     def show_main_ui() -> None:
-        nonlocal status_log, label_img, print_button, label_card, device_table, main_layout, footer
+        nonlocal status_log, label_img, print_button, label_card, device_table, main_layout, footer, empty_table_label
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
             with ui.row().classes("justify-center q-gutter-xl flex-wrap"):
                 with ui.column().style("flex:3;min-width:600px;max-width:900px"):
+                    empty_table_label = ui.label("Noch keine Daten geladen").classes("text-grey text-center q-mt-md")
                     table_kwargs = _build_table_kwargs(ui.table, table_rows, on_select)
                     device_table = ui.table(**table_kwargs).classes("q-mt-md")
+                    empty_table_label.visible = len(table_rows) == 0
                     ui.button("Daten laden", on_click=fetch_data).props("color=primary").classes("q-mt-md")
                 with ui.column().style("flex:2;min-width:320px"):
                     label_card = ui.card().style("margin-left:32px;padding:32px;")
