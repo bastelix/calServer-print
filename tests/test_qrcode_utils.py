@@ -19,9 +19,21 @@ def _stub_modules():
             self.data = data
         def make(self, fit=True):
             pass
-        def make_image(self, fill_color='black', back_color='white'):
+        def make_image(self, fill_color='black', back_color='white', image_factory=None):
+            if image_factory:
+                return image_factory()
             return DummyImage()
     qrcode_mod.QRCode = DummyQRCode
+
+    # Stub qrcode.image.svg.SvgImage
+    qrcode_image_mod = types.ModuleType('qrcode.image')
+    qrcode_svg_mod = types.ModuleType('qrcode.image.svg')
+    class DummySvgImage:
+        def save(self, buffer):
+            buffer.write(b'<svg></svg>')
+    qrcode_svg_mod.SvgImage = DummySvgImage
+    qrcode_image_mod.svg = qrcode_svg_mod
+    qrcode_mod.image = qrcode_image_mod
 
     pil_mod = types.ModuleType('PIL')
     pil_image_mod = types.ModuleType('PIL.Image')
@@ -40,3 +52,8 @@ qrcode_utils = importlib.import_module('app.qrcode_utils')
 def test_generate_qr_code_size():
     img = qrcode_utils.generate_qr_code('hello', size=100)
     assert img.size == (100, 100)
+
+
+def test_generate_qr_code_svg_string():
+    svg = qrcode_utils.generate_qr_code_svg('hello')
+    assert '<svg' in svg and '</svg>' in svg
