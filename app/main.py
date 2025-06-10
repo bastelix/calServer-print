@@ -55,6 +55,8 @@ def _build_table_kwargs(table_func, rows: List[Dict[str, Any]], on_select) -> Di
         kwargs["search"] = True
     if "rows_per_page" in params:
         kwargs["rows_per_page"] = 10
+    if "selection" in params:
+        kwargs["selection"] = "single"
     return kwargs
 
 
