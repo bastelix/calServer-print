@@ -374,26 +374,20 @@ def main() -> None:
         try:
             if pdf_option and pdf_option.value:
                 import tempfile
-                import cairosvg
+                from .svg_utils import svg_to_pdf_bytes
                 from .print_utils import print_file
+                pdf_data = svg_to_pdf_bytes(current_svg)
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+                    tmp.write(pdf_data)
                     tmp_path = tmp.name
-                cairosvg.svg2pdf(bytestring=current_svg.encode('utf-8'), write_to=tmp_path)
                 try:
                     print_file(tmp_path, selected_printer)
                 finally:
                     os.unlink(tmp_path)
             elif png_option and png_option.value:
-                import tempfile
-                import cairosvg
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
-                    tmp_path = tmp.name
-                cairosvg.svg2png(bytestring=current_svg.encode('utf-8'), write_to=tmp_path)
-                img = Image.open(tmp_path)
-                try:
-                    print_label(img, selected_printer)
-                finally:
-                    os.unlink(tmp_path)
+                from .svg_utils import svg_to_png_image
+                img = svg_to_png_image(current_svg)
+                print_label(img, selected_printer)
             else:
                 print_label(current_image, selected_printer)
             push_status(f"Printed on: {selected_printer}")
