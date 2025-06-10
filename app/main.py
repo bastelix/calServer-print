@@ -232,7 +232,9 @@ def main() -> None:
         with footer:
             expansion = ui.expansion("Status anzeigen", value=False)
             with expansion:
-                status_log = ui.log(max_lines=100)
+                status_log = ui.log(max_lines=100).style(
+                    "background-color:white;color:black;width:100%;"
+                )
 
     @ui.page("/")
     def login_page() -> None:
