@@ -15,12 +15,12 @@ from nicegui import ui
 try:
     from .calserver_api import fetch_calibration_data
     from .label_templates import device_label, device_label_svg
-    from .qrcode_utils import generate_qr_code
+    from .qrcode_utils import generate_qr_code, generate_qr_code_svg
     from .print_utils import print_label
 except ImportError:  # pragma: no cover - running as script
     from calserver_api import fetch_calibration_data
     from label_templates import device_label, device_label_svg
-    from qrcode_utils import generate_qr_code
+    from qrcode_utils import generate_qr_code, generate_qr_code_svg
     from print_utils import print_label
 
 
@@ -224,8 +224,9 @@ def main() -> None:
                     or inv.get("mtag")
                     or "-"
                 )
-                qr_img = generate_qr_code(mtag_value, size=60)
-                qr_data = _pil_to_data_url(qr_img)
+                qr_svg = generate_qr_code_svg(mtag_value)
+                qr_data = base64.b64encode(qr_svg.encode()).decode()
+                qr_data = f"data:image/svg+xml;base64,{qr_data}"
                 all_rows.append(
                     {
                         "I4201": inv.get("I4201") or "-",
@@ -237,7 +238,7 @@ def main() -> None:
                         "C2303": entry.get("C2303") or "-",
                         "MTAG": mtag_value,
                         "C2339": entry.get("C2339"),
-                        "qrcode": f"<img src='{qr_data}' width='60' height='60'>",
+                        "qrcode": qr_svg,
                         "preview": f"<a href='{qr_data}' target='_blank'>Vorschau</a>",
                     }
                 )
