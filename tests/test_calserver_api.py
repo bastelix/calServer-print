@@ -1,5 +1,6 @@
 import builtins
 import importlib
+import json
 from types import SimpleNamespace
 
 import sys
@@ -33,4 +34,5 @@ def test_fetch_calibration_data():
     )
     assert data["result"] == "ok"
     assert data["params"]["HTTP_X_REST_USERNAME"] == "user"
-    assert data["json"] == {"foo": 1}
+    assert data["params"]["filter"] == json.dumps({"foo": 1})
+    assert data["json"] is None
