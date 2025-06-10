@@ -1,5 +1,6 @@
 """Small wrapper around the calServer REST API."""
 
+import json
 import requests
 from typing import Any, Dict
 
@@ -9,7 +10,7 @@ def fetch_calibration_data(
     username: str,
     password: str,
     api_key: str,
-    filter_json: Dict[str, Any],
+    filter_json: Dict[str, Any] | list,
 ) -> Dict[str, Any]:
     """Fetch calibration information from the API.
 
@@ -35,11 +36,12 @@ def fetch_calibration_data(
         Parsed JSON content of the successful API response.
     """
     params = {
-        'HTTP_X_REST_USERNAME': username,
-        'HTTP_X_REST_PASSWORD': password,
-        'HTTP_X_REST_API_KEY': api_key,
+        "HTTP_X_REST_USERNAME": username,
+        "HTTP_X_REST_PASSWORD": password,
+        "HTTP_X_REST_API_KEY": api_key,
+        "filter": json.dumps(filter_json),
     }
     url = f"{base_url.rstrip('/')}/api/calibration"
-    response = requests.get(url, params=params, json=filter_json, timeout=10)
+    response = requests.get(url, params=params, timeout=10)
     response.raise_for_status()
     return response.json()

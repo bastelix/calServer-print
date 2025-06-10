@@ -9,6 +9,13 @@ import os
 import inspect
 from typing import Any, Dict, List
 
+# Only show calibrations flagged for printing
+# The API expects the filter as a list of objects in the ``filter`` query
+# parameter.
+DEFAULT_FILTER: List[Dict[str, Any]] = [
+    {"property": "C2339", "value": 1, "operator": "="}
+]
+
 from PIL import Image
 from nicegui import ui
 
@@ -118,7 +125,7 @@ def main() -> None:
                 username.value,
                 password.value,
                 api_key.value,
-                {},
+                DEFAULT_FILTER,
             )
             stored_login.update(
                 {
@@ -150,7 +157,7 @@ def main() -> None:
                 stored_login.get("username", username.value),
                 stored_login.get("password", password.value),
                 stored_login.get("api_key", api_key.value),
-                {},
+                DEFAULT_FILTER,
             )
             if isinstance(data, dict) and isinstance(data.get("data"), dict):
                 cal_list = data["data"].get("calibration", [])
@@ -160,6 +167,8 @@ def main() -> None:
                 cal_list = [data] if data else []
             rows = []
             for entry in cal_list:
+                if entry.get("C2339") != 1:
+                    continue
                 inv = entry.get("inventory") or {}
                 rows.append(
                     {
