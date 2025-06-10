@@ -46,17 +46,20 @@ def _build_table_kwargs(table_func, rows: List[Dict[str, Any]], on_select) -> Di
         rows=rows,
         row_key="I4201",
         on_select=on_select,
-        rows_per_page=10,
     )
 
     params = inspect.signature(table_func).parameters
     if "pagination" in params:
-        kwargs["pagination"] = True
+        kwargs["pagination"] = {"rowsPerPage": 10}
+    elif "rows_per_page" in params:
+        kwargs["rows_per_page"] = 10
+    elif any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
+        kwargs["rows_per_page"] = 10
     if "search" in params:
         kwargs["search"] = True
-    # remove rows_per_page if not supported by the provided table function
     if (
         "rows_per_page" not in params
+        and "pagination" not in params
         and not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
     ):
         kwargs.pop("rows_per_page", None)

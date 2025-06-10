@@ -21,11 +21,11 @@ sys.modules["nicegui.ui"] = ng_mod.ui
 from app import main
 
 
-def dummy_table_a(columns=None, rows=None, row_key=None, on_select=None, pagination=True):
+def dummy_table_a(columns=None, rows=None, row_key=None, on_select=None, pagination=None):
     pass
 
 
-def dummy_table_b(columns=None, rows=None, row_key=None, on_select=None):
+def dummy_table_b(columns=None, rows=None, row_key=None, on_select=None, rows_per_page=None):
     pass
 
 
@@ -33,11 +33,12 @@ def dummy_table_c(columns=None, rows=None, row_key=None, on_select=None, selecti
     pass
 
 
-def test_build_table_kwargs_optional_pagination():
+def test_build_table_kwargs_pagination_or_rows_per_page():
     kwargs_a = main._build_table_kwargs(dummy_table_a, [], None)
-    assert 'pagination' in kwargs_a
+    assert kwargs_a.get('pagination') == {'rowsPerPage': 10}
 
     kwargs_b = main._build_table_kwargs(dummy_table_b, [], None)
+    assert kwargs_b.get('rows_per_page') == 10
     assert 'pagination' not in kwargs_b
 
 
