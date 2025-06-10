@@ -167,6 +167,7 @@ def main() -> None:
                         "I4206": inv.get("I4206") or "-",
                         "C2301": entry.get("C2301") or "-",
                         "C2303": entry.get("C2303") or "-",
+                        "MTAG": entry.get("MTAG") or inv.get("MTAG") or "-",
                     }
                 )
             table_rows.clear()
@@ -198,7 +199,12 @@ def main() -> None:
                 print_button.disable()
             return
 
-        img = device_label(row.get("I4201", ""), row.get("I4206", ""))
+        name = row.get("I4201", "")
+        expiry = row.get("C2303", "")
+        mtag = row.get("MTAG", "")
+        if not mtag or mtag == "-":
+            push_status("MTAG fehlt für ausgewähltes Gerät")
+        img = device_label(name, expiry, mtag)
         current_image = img
         if label_img:
             label_img.set_source(_pil_to_data_url(img))
