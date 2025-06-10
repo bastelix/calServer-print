@@ -78,17 +78,6 @@ für `APP_CONFIG` gesetzt werden.
 
 ### Beispielskript
 
-Im Ordner `examples` befindet sich mit
-`simple_label_tool.py` ein kompaktes Beispiel, das den
-Workflow aus Tabellen-Auswahl, Template-Wahl und SVG‑Vorschau
-zeigt. Es lässt sich direkt mit
-
-```bash
-python examples/simple_label_tool.py
-```
-
-starten und benötigt lediglich **NiceGUI**, **qrcode** und
-**jinja2** als Abhängigkeiten.
 
 ## ⚡ Start als Desktop-App
 

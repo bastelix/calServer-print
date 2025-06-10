@@ -18,6 +18,20 @@ ng_mod.ui = types.SimpleNamespace()
 sys.modules["nicegui"] = ng_mod
 sys.modules["nicegui.ui"] = ng_mod.ui
 
+# Stub jinja2 for import in app.main
+jinja2_mod = types.ModuleType("jinja2")
+class DummyTemplate:
+    def __init__(self, text):
+        self.text = text
+    def render(self, **kwargs):
+        result = self.text
+        for k, v in kwargs.items():
+            result = result.replace(f"{{{{ {k} }}}}", str(v))
+        return result
+
+jinja2_mod.Template = DummyTemplate
+sys.modules["jinja2"] = jinja2_mod
+
 from app import main
 
 
