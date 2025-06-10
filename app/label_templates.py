@@ -3,6 +3,16 @@
 from PIL import Image, ImageDraw, ImageFont
 from .qrcode_utils import generate_qr_code, generate_qr_code_svg
 
+
+def svg_header() -> str:
+    """Return a standard SVG header."""
+
+    return (
+        "<?xml version='1.0' encoding='UTF-8' standalone='no'?>\n"
+        "<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' "
+        "'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>\n"
+    )
+
 FONT = ImageFont.load_default()
 
 
@@ -35,8 +45,7 @@ def device_label_svg(name: str, expiry: str, mtag: str) -> str:
     """Return an SVG representation of a device label."""
 
     qr_svg = generate_qr_code_svg(mtag)
-
-    svg = f"""
+    svg_body = f"""
 <svg width='400' height='200' xmlns='http://www.w3.org/2000/svg'>
   <rect width='100%' height='100%' fill='white'/>
   <text x='10' y='30' font-size='16'>Gerät: {name}</text>
@@ -46,15 +55,14 @@ def device_label_svg(name: str, expiry: str, mtag: str) -> str:
   </g>
 </svg>
 """
-    return svg
+    return svg_header() + svg_body
 
 
 def simple_device_label_svg(name: str, expiry: str, mtag: str) -> str:
     """Return a simplified SVG representation of a device label."""
 
     qr_svg = generate_qr_code_svg(mtag)
-
-    svg = f"""
+    svg_body = f"""
 <svg width='400' height='200' xmlns='http://www.w3.org/2000/svg'>
   <rect width='100%' height='100%' fill='white'/>
   <text x='200' y='40' font-size='20' text-anchor='middle'>{name}</text>
@@ -64,7 +72,7 @@ def simple_device_label_svg(name: str, expiry: str, mtag: str) -> str:
   </g>
 </svg>
 """
-    return svg
+    return svg_header() + svg_body
 
 
 def calibration_label(date: str, status: str, cert: str, qr_data: str) -> Image.Image:

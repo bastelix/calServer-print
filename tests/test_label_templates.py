@@ -104,3 +104,8 @@ def test_device_label_svg_contents():
     assert "Gerät: Device" in svg
     assert "Ablauf: 2025-01-01" in svg
     assert "<g" in svg
+
+
+def test_svg_header_present():
+    svg = label_templates.device_label_svg("Device", "2025-01-01", "MT123")
+    assert svg.startswith(label_templates.svg_header())

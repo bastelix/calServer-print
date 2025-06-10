@@ -20,6 +20,7 @@ try:
         device_label_svg,
         available_label_templates,
         render_label_template,
+        svg_header,
     )
     from .qrcode_utils import generate_qr_code, generate_qr_code_svg
     from .print_utils import print_label, list_printers
@@ -30,6 +31,7 @@ except ImportError:
         device_label_svg,
         available_label_templates,
         render_label_template,
+        svg_header,
     )
     from qrcode_utils import generate_qr_code, generate_qr_code_svg
     from print_utils import print_label, list_printers
@@ -158,7 +160,8 @@ def main() -> None:
         qr_svg = generate_qr_code_svg(qr_data)
         if template in jinja_templates:
             tpl = jinja2.Template(jinja_templates[template])
-            return tpl.render(I4201=name, C2303=expiry, MTAG=qr_data, QRCODE=qr_svg)
+            body = tpl.render(I4201=name, C2303=expiry, MTAG=qr_data, QRCODE=qr_svg)
+            return svg_header() + body
         return render_label_template(template, name, expiry, qr_data)
 
     # enable Tailwind CSS for the login dialog styling
