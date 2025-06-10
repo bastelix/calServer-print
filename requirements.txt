@@ -5,3 +5,4 @@ qrcode
 pywin32; sys_platform == "win32"
 pycups; sys_platform != "win32"
 pytest
+python-dotenv

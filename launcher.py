@@ -17,6 +17,8 @@ import logging
 import argparse
 import os
 import sys
+
+from dotenv import load_dotenv
 from app.main import main
 
 def setup_logging(debug: bool):
@@ -28,8 +30,11 @@ def setup_logging(debug: bool):
     )
 
 def check_environment():
+    load_dotenv()
     if not os.getenv("APP_CONFIG"):
-        logging.warning("APP_CONFIG environment variable is not set; using defaults.")
+        logging.warning(
+            "APP_CONFIG environment variable is not set; using defaults."
+        )
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Launch NiceGUI app.")
