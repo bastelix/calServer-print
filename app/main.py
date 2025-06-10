@@ -121,6 +121,8 @@ def main() -> None:
     main_layout: ui.column | None = None
     filter_slider: ui.slider | None = None
     filter_value: int = 1
+    label_dialog: ui.dialog | None = None
+    dialog_label_svg: ui.html | None = None
 
     # login form elements (initialized on the login page)
     base_url: ui.input | None = None
@@ -316,6 +318,27 @@ def main() -> None:
         selected_row = _find_row(row)
         update_label(selected_row)
 
+    def open_label_dialog(row: Dict[str, Any] | None) -> None:
+        """Show label preview dialog for the given row."""
+        if not row or not dialog_label_svg or not label_dialog:
+            return
+        name = row.get("I4201", "")
+        expiry = row.get("C2303", "")
+        mtag = row.get("MTAG", "")
+        base_domain = stored_login.get("base_url", base_url.value).rstrip("/")
+        qr_value = f"{base_domain}/qrcode/{mtag}"
+        dialog_label_svg.content = device_label_svg(name, expiry, qr_value)
+        label_dialog.open()
+
+    def handle_cell_click(e) -> None:
+        """Show preview dialog when the preview column is clicked."""
+        data = getattr(e, "args", None)
+        if isinstance(data, dict):
+            col = data.get("column") or {}
+            if col.get("name") == "preview":
+                row = _find_row(data.get("row"))
+                open_label_dialog(row)
+
     def on_slider_change(e) -> None:
         nonlocal filter_value
         try:
@@ -334,12 +357,16 @@ def main() -> None:
             push_status(f"Print error: {e}")
 
     def show_main_ui() -> None:
-        nonlocal status_log, label_svg, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_slider, row_info_label
+        nonlocal status_log, label_svg, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_slider, row_info_label, label_dialog, dialog_label_svg
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
             filter_slider = ui.slider(min=0, max=2, step=1, value=1, on_change=on_slider_change).props("label-always").classes("q-mt-md")
             ui.button("Daten laden", on_click=fetch_data).props("color=primary").classes("q-mt-md")
+            with ui.dialog() as label_dialog:
+                with ui.card():
+                    dialog_label_svg = ui.html(device_label_svg("", "", "")).style("max-width:260px;")
+                    ui.button("Schließen", on_click=label_dialog.close)
             # table and label preview side by side below controls
             with ui.row().classes("justify-center q-gutter-xl items-start"):
                 with ui.column().style("flex:3;min-width:600px;max-width:900px"):
@@ -347,6 +374,7 @@ def main() -> None:
                     table_kwargs = _build_table_kwargs(ui.table, table_rows, on_select)
                     device_table = ui.table(**table_kwargs).classes("q-mt-md")
                     device_table.on("row-click", handle_row_click)
+                    device_table.on("cell-click", handle_cell_click)
                     device_table.add_slot(
                         "body-cell-qrcode",
                         """
