@@ -194,7 +194,8 @@ def main() -> None:
                     with label_card:
                         ui.label("Label-Vorschau").classes("text-h6")
                         label_img = ui.image("").classes("q-mb-md").style("max-width:260px;")
-                        print_button = ui.button("Drucken", on_click=do_print, disabled=True).props("color=primary")
+                        print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
+                        print_button.disable()
             with ui.footer().classes("bg-grey-2 shadow-2"):
                 expansion = ui.expansion("Status anzeigen", value=False)
                 with expansion:
