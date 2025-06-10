@@ -292,10 +292,10 @@ def main() -> None:
                     dialog_label_svg = ui.html(device_label_svg("","","")).style("max-width:260px;")
                     ui.button("Schließen", on_click=label_dialog.close)
             # Tabelle & Vorschau
-            # Tabelle & Vorschau im Grid-Layout
-            with ui.grid(columns=16).classes("w-full gap-0"):
-                # Tabelle links (10 Teile)
-                with ui.column().classes("col-span-10 border p-1"):
+            # Tabelle & Vorschau im flex-Layout
+            with ui.row().classes('flex flex-col md:flex-row w-full gap-4'):
+                # Tabelle links
+                with ui.column().classes('w-full md:w-2/3 border p-1'):
                     filter_switch = ui.switch("Nur aktuelle", value=True, on_change=lambda e: apply_table_filter()).classes("q-mt-md")
                     ui.label("Nur Aktuelle!").bind_visibility_from(filter_switch, 'value')
                     empty_table_label = ui.label("Noch keine Daten geladen").classes("text-grey text-center q-mt-md")
@@ -303,14 +303,14 @@ def main() -> None:
                     device_table.on("row-click", handle_row_click)
                     device_table.on("cell-click", handle_cell_click)
                     device_table.add_slot("body-cell-qrcode", """
-                        <q-td :props="props"><img :src="props.value" style="width:80px;height:80px" /></q-td>
+                        <q-td :props="props"><img :src="props.value" class="w-20 h-20 object-contain" /></q-td>
                     """)
                     device_table.add_slot("body-cell-preview", """
                         <q-td :props="props"><div v-html="props.value" /></q-td>
                     """)
                     empty_table_label.visible = len(table_rows) == 0
-                # Vorschau rechts (6 Teile)
-                with ui.column().classes("col-span-6 border p-1"):
+                # Vorschau rechts
+                with ui.column().classes('w-full md:w-1/3 border p-1'):
                     with ui.card().classes("pa-4"):
                         ui.label("Label-Vorschau").classes("text-h6")
                         row_info_label = ui.label("Bitte Gerät auswählen").classes("q-mb-md")
