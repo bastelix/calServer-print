@@ -45,6 +45,7 @@ def main() -> None:
     device_table: ui.table | None = None
     main_layout: ui.column | None = None
     login_card: ui.card | None = None
+    footer: ui.footer | None = None
 
     def push_status(msg: str) -> None:
         if status_log:
@@ -77,7 +78,7 @@ def main() -> None:
             push_status(f"Login failed: {e}")
 
     def logout() -> None:
-        nonlocal selected_row, current_image
+        nonlocal selected_row, current_image, footer
         push_status("Logged out")
         stored_login.clear()
         selected_row = None
@@ -85,6 +86,8 @@ def main() -> None:
         if main_layout:
             main_layout.clear()
         login_card.visible = True
+        if footer:
+            footer.visible = False
 
     def fetch_data() -> None:
         nonlocal selected_row
@@ -161,7 +164,7 @@ def main() -> None:
             push_status(f"Print error: {e}")
 
     def show_main_ui() -> None:
-        nonlocal status_log, label_img, print_button, label_card, device_table, main_layout
+        nonlocal status_log, label_img, print_button, label_card, device_table, main_layout, footer
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
@@ -196,10 +199,7 @@ def main() -> None:
                         label_img = ui.image("").classes("q-mb-md").style("max-width:260px;")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
-        with ui.footer().classes("bg-grey-2 shadow-2"):
-            expansion = ui.expansion("Status anzeigen", value=False)
-            with expansion:
-                status_log = ui.log(max_lines=100)
+        footer.visible = True
 
     # ----- Login card -----
     login_card = ui.card().style("max-width:420px;margin:80px auto;")
@@ -227,6 +227,13 @@ def main() -> None:
             value="53f1871505fa8190659aaae17845bd19" if is_dev else "",
         ).props("outlined")
         ui.button("Login", on_click=handle_login).props("color=primary")
+
+    footer = ui.footer().classes("bg-grey-2 shadow-2")
+    footer.visible = False
+    with footer:
+        expansion = ui.expansion("Status anzeigen", value=False)
+        with expansion:
+            status_log = ui.log(max_lines=100)
 
     ui.run(port=8080, show=False)
 
