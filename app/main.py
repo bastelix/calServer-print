@@ -46,6 +46,7 @@ def _build_table_kwargs(table_func, rows: List[Dict[str, Any]], on_select) -> Di
         rows=rows,
         row_key="I4201",
         on_select=on_select,
+        rows_per_page=10,
     )
 
     params = inspect.signature(table_func).parameters
@@ -53,10 +54,12 @@ def _build_table_kwargs(table_func, rows: List[Dict[str, Any]], on_select) -> Di
         kwargs["pagination"] = True
     if "search" in params:
         kwargs["search"] = True
-    if "rows_per_page" in params or any(
-        p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()
+    # remove rows_per_page if not supported by the provided table function
+    if (
+        "rows_per_page" not in params
+        and not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
     ):
-        kwargs["rows_per_page"] = 10
+        kwargs.pop("rows_per_page", None)
     if "selection" in params:
         kwargs["selection"] = "single"
     return kwargs
@@ -88,6 +91,7 @@ def main() -> None:
     label_img: ui.image | None = None
     print_button: ui.button | None = None
     label_card: ui.card | None = None
+    placeholder_label: ui.label | None = None
     device_table: ui.table | None = None
     empty_table_label: ui.label | None = None
     main_layout: ui.column | None = None
@@ -184,24 +188,32 @@ def main() -> None:
     def update_label(row: Dict[str, Any] | None) -> None:
         nonlocal current_image
         if not row:
-            if label_card:
-                label_card.visible = False
+            current_image = None
+            if label_img:
+                label_img.set_source("")
+                label_img.visible = False
+            if placeholder_label:
+                placeholder_label.visible = True
             if print_button:
                 print_button.disable()
             return
+
         img = device_label(row.get("I4201", ""), row.get("I4206", ""))
         current_image = img
         if label_img:
             label_img.set_source(_pil_to_data_url(img))
-        if label_card:
-            label_card.visible = True
+            label_img.visible = True
+        if placeholder_label:
+            placeholder_label.visible = False
         if print_button:
             print_button.enable()
 
     def on_select(e) -> None:
         nonlocal selected_row
-        selected_row = e.args
-        update_label(selected_row)
+        key = getattr(e, "selection", None)
+        row_data = next((r for r in table_rows if r.get("I4201") == key), None)
+        selected_row = row_data
+        update_label(row_data)
 
     def do_print() -> None:
         if not current_image:
@@ -213,7 +225,7 @@ def main() -> None:
             push_status(f"Print error: {e}")
 
     def show_main_ui() -> None:
-        nonlocal status_log, label_img, print_button, label_card, device_table, main_layout, empty_table_label
+        nonlocal status_log, label_img, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
@@ -225,11 +237,12 @@ def main() -> None:
                     empty_table_label.visible = len(table_rows) == 0
                     ui.button("Daten laden", on_click=fetch_data).props("color=primary").classes("q-mt-md")
                 with ui.column().style("flex:2;min-width:320px"):
-                    label_card = ui.card().style("margin-left:32px;padding:32px;")
-                    label_card.visible = False
+                    label_card = ui.card().style("margin-left:32px;padding:32px;min-height:260px;")
                     with label_card:
                         ui.label("Label-Vorschau").classes("text-h6")
+                        placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
                         label_img = ui.image("").classes("q-mb-md").style("max-width:260px;")
+                        label_img.visible = False
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
         footer = ui.footer().classes("bg-grey-2 shadow-2")
