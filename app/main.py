@@ -322,17 +322,31 @@ def main() -> None:
 
     @ui.page("/")
     def login_page() -> None:
-        nonlocal base_url, username, password, api_key
-        with ui.card().style("max-width:420px;margin:80px auto;"):
-            ui.label("calServer Labeltool").classes("text-h5 text-center q-mb-md")
-            is_dev = os.getenv("APP_ENV") == "development"
-            domain = os.getenv("DOMAIN", "demo.net-cal.com" if is_dev else "calserver.example.com")
-            default_url = f"https://{domain}" if not domain.startswith("http") else domain
-            base_url = ui.input("API URL", value=default_url).props("outlined")
-            username = ui.input("Benutzername", value="api-demo@calhelp.de" if is_dev else "").props("outlined")
-            password = ui.input("Passwort", password=True).props("outlined")
-            api_key = ui.input("API Key", password=True, value="53f1871505fa8190659aaae17845bd19" if is_dev else "").props("outlined")
-            ui.button("Login", on_click=handle_login).props("color=primary")
+    nonlocal base_url, username, password, api_key
+    is_dev = os.getenv("APP_ENV") == "development"
+    domain = os.getenv("DOMAIN", "demo.net-cal.com" if is_dev else "calserver.example.com")
+    default_url = f"https://{domain}" if not domain.startswith("http") else domain
+
+    with ui.row().classes('min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-[#f8f4f3]'):
+        with ui.column().classes('mb-6'):
+            ui.html("""
+                <a href="/" class="flex justify-center">
+                    <h2 class="font-bold text-3xl">calServer <span class="bg-[#f84525] text-white px-2 rounded-md">Labeltool</span></h2>
+                </a>
+            """)
+        with ui.column().classes('w-full sm:max-w-md px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg'):
+            ui.label('Log In').classes('block text-2xl font-semibold text-center mb-8')
+            ui.label('API URL').classes('block font-medium text-sm text-gray-700 mb-1')
+            base_url = ui.input(placeholder='API URL', value=default_url).classes('w-full rounded-md py-2.5 px-4 border text-sm outline-[#f84525] mb-4')
+            ui.label('Benutzername').classes('block font-medium text-sm text-gray-700 mb-1')
+            username = ui.input(placeholder='E-Mail', value="api-demo@calhelp.de" if is_dev else "").classes('w-full rounded-md py-2.5 px-4 border text-sm outline-[#f84525] mb-4')
+            ui.label('Passwort').classes('block font-medium text-sm text-gray-700 mb-1')
+            with ui.row().classes('relative'):
+                password = ui.input(placeholder='Passwort', password=True).classes('w-full rounded-md py-2.5 px-4 border text-sm outline-[#f84525]')
+                ui.button('', icon='visibility', on_click=lambda: password.set_password(not password._props.get('password', True))).classes('absolute right-2 top-2 text-gray-500 bg-transparent shadow-none')
+            ui.label('API Key').classes('block font-medium text-sm text-gray-700 mb-1 mt-4')
+            api_key = ui.input(placeholder='API Key', password=True, value="53f1871505fa8190659aaae17845bd19" if is_dev else "").classes('w-full rounded-md py-2.5 px-4 border text-sm outline-[#f84525] mb-4')
+            ui.button("Login", on_click=handle_login).classes('inline-flex items-center px-4 py-2 bg-[#f84525] border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-800 focus:bg-gray-700 active:bg-gray-900 transition ease-in-out duration-150 w-full mt-6')
 
     @ui.page("/app")
     def main_page() -> None:
