@@ -306,17 +306,14 @@ def main() -> None:
                     empty_table_label.visible = len(table_rows) == 0
                 # Vorschau rechts
                 with ui.column().style("min-width:320px;"):
-                    ui.card().classes("pa-4").with_content(lambda:
-                        (
-                            ui.label("Label-Vorschau").classes("text-h6"),
-                            row_info_label := ui.label("Bitte Gerät auswählen").classes("q-mb-md"),
-                            placeholder_label := ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md"),
-                            placeholder_label.hide(),
-                            label_svg := ui.html(device_label_svg("","","")).style("max-width:260px;;;"),
-                            print_button := ui.button("Drucken", on_click=do_print).props("color=primary"),
-                            print_button.disable()
-                        )
-                    )
+                    with ui.card().classes("pa-4"):
+                        ui.label("Label-Vorschau").classes("text-h6")
+                        row_info_label = ui.label("Bitte Gerät auswählen").classes("q-mb-md")
+                        placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
+                        placeholder_label.hide()
+                        label_svg = ui.html(device_label_svg("","","")).style("max-width:260px;;;")
+                        print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
+                        print_button.disable()
         # Footer
         with ui.footer().classes("bg-grey-2 shadow-2"):
             with ui.expansion("Status anzeigen", value=False):
