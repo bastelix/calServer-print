@@ -137,7 +137,7 @@ def main() -> None:
   <rect width='100%' height='100%' fill='white'/>
   <text x='10' y='40' font-size='16'>I4201: {{ I4201 }}</text>
   <text x='10' y='80' font-size='16'>C2303: {{ C2303 }}</text>
-  <g transform='translate(280,10)'>
+  <g transform='translate(200,40) scale(0.5)'>
     {{ QRCODE }}
   </g>
 </svg>
@@ -325,11 +325,13 @@ def main() -> None:
         if col == "preview":
             row = data.get("row") if isinstance(data, dict) else None
             if row:
+                mtag = row.get("MTAG", "")
+                qr_url = f"{stored_login['base_url'].rstrip('/')}/qrcode/{mtag}"
                 dialog_label_svg.content = render_preview(
                     selected_template,
                     row["I4201"],
                     row["C2303"],
-                    row["MTAG"],
+                    qr_url,
                 )
                 label_dialog.open()
 
