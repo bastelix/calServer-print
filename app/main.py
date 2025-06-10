@@ -1,26 +1,27 @@
-"""NiceGUI based user interface for printing calibration labels."""
+"""NiceGUI based label printing application with login and device table."""
 
-import json
-import inspect
-import io
+from __future__ import annotations
+
 import base64
+import io
+import json
+from typing import Any, Dict, List
+
 from PIL import Image
 from nicegui import ui
 
-# dictionary to keep login information during runtime
-stored_login: dict[str, str] = {}
-
 try:
     from .calserver_api import fetch_calibration_data
-    from .label_templates import device_label, calibration_label
-    from .print_utils import list_printers, print_label
-except ImportError:  # pragma: no cover - allow running as script
+    from .label_templates import device_label
+    from .print_utils import print_label
+except ImportError:  # pragma: no cover - running as script
     from calserver_api import fetch_calibration_data
-    from label_templates import device_label, calibration_label
-    from print_utils import list_printers, print_label
+    from label_templates import device_label
+    from print_utils import print_label
 
 
 def _pil_to_data_url(image: Image.Image) -> str:
+    """Return a data URL for the given PIL image."""
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
     data = base64.b64encode(buffer.getvalue()).decode()
@@ -28,215 +29,180 @@ def _pil_to_data_url(image: Image.Image) -> str:
 
 
 def main() -> None:
-    """Run the interactive NiceGUI application."""
+    """Run the NiceGUI label tool."""
 
-    cal_data = {}
+    stored_login: Dict[str, str] = {}
+    table_rows: List[Dict[str, Any]] = []
+    selected_row: Dict[str, Any] | None = None
     current_image: Image.Image | None = None
 
-    # table configuration for displaying device data
-    table_columns = [
-        {"name": "I4201", "label": "Gerätename", "field": "I4201"},
-        {"name": "I4202", "label": "Hersteller", "field": "I4202"},
-        {"name": "I4203", "label": "Typ", "field": "I4203"},
-        {"name": "I4204", "label": "Beschreibung", "field": "I4204"},
-        {"name": "I4206", "label": "Seriennummer", "field": "I4206"},
-        {"name": "C2301", "label": "Kalibrierdatum", "field": "C2301"},
-        {"name": "C2303", "label": "Ablaufdatum", "field": "C2303"},
-    ]
-    table_rows: list[dict] = []
+    status_log: ui.log | None = None
+    label_img: ui.image | None = None
+    print_button: ui.button | None = None
+    label_card: ui.card | None = None
+    device_table: ui.table | None = None
+    main_layout: ui.column | None = None
+    login_card: ui.card | None = None
 
-    # main card containing all form elements
-    card = ui.card().style(
-        "max-width: 420px; margin: 80px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.13);"
-    )
-    with card:
-        ui.label("calServer Labeltool").classes("text-h4 text-center q-mb-lg")
+    def push_status(msg: str) -> None:
+        if status_log:
+            status_log.push(msg)
+        ui.notify(msg)
 
-        base_url = ui.input(
-            "API Base URL",
-            value=stored_login.get("base_url", "https://calserver.example.com"),
-        ).props("outlined").classes("q-mb-sm")
-
-        username = ui.input("Username", value=stored_login.get("username", "")).props(
-            "outlined"
-        )
-
-        password = ui.input(
-            "Password", password=True, value=stored_login.get("password", "")
-        ).props("outlined")
-
-        api_key = ui.input(
-            "API Key", password=True, value=stored_login.get("api_key", "")
-        ).props("outlined")
-
-        filter_json = ui.textarea(
-            "Filter JSON", value=stored_login.get("filter_json", "{}")
-        ).props("outlined").classes("q-mb-md")
-
-        label_type = ui.radio(["Device", "Calibration"], value="Device").classes(
-            "q-mb-md"
-        )
-
-        printer_select = ui.select(options=list_printers()).classes("q-mb-md")
-
-    label_img = ui.image("")
-    # Older NiceGUI versions do not support the ``classes`` argument on
-    # ``ui.image``.  We therefore add the tailwind class after creation if the
-    # helper is available.
-    if hasattr(label_img, "classes"):
-        label_img.classes("w-96 q-mt-md")
-    else:  # pragma: no cover - compatibility fallback
-        label_img.style("width: 24rem; margin-top: 1rem")
-
-    # log window for detailed application messages
-    log_window = ui.log(max_lines=100)
-    login_status: ui.label | None = None
-
-    def do_login() -> None:
-        nonlocal login_status
-        """Check login credentials and remember them."""
+    def handle_login() -> None:
+        nonlocal login_card, main_layout
         try:
-            log_window.push("Checking login...")
-            # store values so the user does not have to re-enter them
-            stored_login.update({
-                "base_url": base_url.value,
-                "username": username.value,
-                "password": password.value,
-                "api_key": api_key.value,
-                "filter_json": filter_json.value,
-            })
-            # try a simple request to verify the credentials
+            push_status("Checking login...")
             fetch_calibration_data(
                 base_url.value,
                 username.value,
                 password.value,
                 api_key.value,
-                json.loads(filter_json.value or "{}"),
+                {},
             )
-            login_status.set_text("Login successful")
-            ui.notify("Login successful", type="positive")
-            log_window.push("Login successful")
+            stored_login.update(
+                {
+                    "base_url": base_url.value,
+                    "username": username.value,
+                    "password": password.value,
+                    "api_key": api_key.value,
+                }
+            )
+            login_card.visible = False
+            show_main_ui()
+            push_status("Login successful")
         except Exception as e:  # pragma: no cover - UI only
-            login_status.set_text("Login failed")
-            log_window.push(f"Error: {e}")
-            ui.notify(str(e), type="negative")
+            push_status(f"Login failed: {e}")
 
-    def fetch() -> None:
-        nonlocal cal_data, current_image
+    def logout() -> None:
+        nonlocal selected_row, current_image
+        push_status("Logged out")
+        stored_login.clear()
+        selected_row = None
+        current_image = None
+        if main_layout:
+            main_layout.clear()
+        login_card.visible = True
+
+    def fetch_data() -> None:
+        nonlocal selected_row
         try:
-            log_window.push("Fetching data...")
-            stored_login.update({
-                "base_url": base_url.value,
-                "username": username.value,
-                "password": password.value,
-                "api_key": api_key.value,
-                "filter_json": filter_json.value,
-            })
-            user_filter = json.loads(filter_json.value or "{}")
-            user_filter["C2339"] = "1"
+            push_status("Fetching data...")
             data = fetch_calibration_data(
-                base_url.value,
-                username.value,
-                password.value,
-                api_key.value,
-                user_filter,
+                stored_login.get("base_url", base_url.value),
+                stored_login.get("username", username.value),
+                stored_login.get("password", password.value),
+                stored_login.get("api_key", api_key.value),
+                {},
             )
-
-            # extract calibration list from API response
-            if isinstance(data, dict):
-                if isinstance(data.get("data"), dict) and isinstance(
-                    data["data"].get("calibration"), list
-                ):
-                    cal_list = data["data"]["calibration"]
-                else:
-                    cal_list = [data]
+            if isinstance(data, dict) and isinstance(data.get("data"), dict):
+                cal_list = data["data"].get("calibration", [])
             elif isinstance(data, list):
                 cal_list = data
             else:
-                cal_list = []
-
-            # convert API structure to table rows
+                cal_list = [data] if data else []
             rows = []
             for entry in cal_list:
                 inv = entry.get("inventory") or {}
                 rows.append(
                     {
-                        "I4201": inv.get("I4201"),
-                        "I4202": inv.get("I4202"),
-                        "I4203": inv.get("I4203"),
-                        "I4204": inv.get("I4204"),
-                        "I4206": inv.get("I4206"),
-                        "C2301": entry.get("C2301"),
-                        "C2303": entry.get("C2303"),
+                        "I4201": inv.get("I4201") or "-",
+                        "I4202": inv.get("I4202") or "-",
+                        "I4203": inv.get("I4203") or "-",
+                        "I4204": inv.get("I4204") or "-",
+                        "I4206": inv.get("I4206") or "-",
+                        "C2301": entry.get("C2301") or "-",
+                        "C2303": entry.get("C2303") or "-",
                     }
                 )
-
             table_rows.clear()
             table_rows.extend(rows)
-            cal_data = cal_list[0] if cal_list else {}
-            device_table.update()
-            ui.notify("Daten geladen", type="positive")
-            log_window.push("Data loaded successfully")
-            update_label()
+            selected_row = None
+            if device_table:
+                device_table.update()
+            push_status("Data loaded")
         except Exception as e:  # pragma: no cover - UI only
-            ui.notify(f"Fehler beim Laden der Gerätedaten: {e}", type="negative")
+            push_status(f"Error fetching data: {e}")
             table_rows.clear()
-            cal_data = {}
-            device_table.update()
-            log_window.push(f"Error: {e}")
+            if device_table:
+                device_table.update()
 
-    def update_label() -> None:
+    def update_label(row: Dict[str, Any] | None) -> None:
         nonlocal current_image
-        if not cal_data:
+        if not row:
+            if label_card:
+                label_card.visible = False
+            if print_button:
+                print_button.disable()
             return
-        log_window.push(f"Render label: {label_type.value}")
-        if label_type.value == "Device":
-            name = cal_data.get("device_name", "Device")
-            device_id = str(cal_data.get("device_id", ""))
-            img = device_label(name, device_id)
-        else:
-            date = cal_data.get("date", "")
-            status = cal_data.get("status", "")
-            cert = cal_data.get("certificate", "")
-            img = calibration_label(date, status, cert, str(cal_data))
+        img = device_label(row.get("I4201", ""), row.get("I4206", ""))
         current_image = img
-        label_img.set_source(_pil_to_data_url(img))
+        if label_img:
+            label_img.set_source(_pil_to_data_url(img))
+        if label_card:
+            label_card.visible = True
+        if print_button:
+            print_button.enable()
+
+    def on_select(e) -> None:
+        nonlocal selected_row
+        selected_row = e.args
+        update_label(selected_row)
 
     def do_print() -> None:
         if not current_image:
             return
         try:
-            log_window.push(f"Printing on {printer_select.value}")
-            print_label(current_image, printer_select.value)
-            ui.notify("Printed", type="positive")
+            print_label(current_image, "")
+            push_status("Printed")
         except Exception as e:  # pragma: no cover - UI only
-            log_window.push(f"Print error: {e}")
-            ui.notify(str(e), type="negative")
+            push_status(f"Print error: {e}")
 
-    with card:
-        with ui.row().classes("q-gutter-md"):
-            ui.button("Login", on_click=do_login).props("color=primary")
-            ui.button("Fetch Data", on_click=fetch).props("color=primary")
-            ui.button("Print", on_click=do_print).props("color=secondary")
-        login_status = ui.label("").classes("text-positive")
+    def show_main_ui() -> None:
+        nonlocal status_log, label_img, print_button, label_card, device_table, main_layout
+        main_layout = ui.column()
+        with main_layout:
+            ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
+            with ui.row().classes("justify-center q-gutter-xl flex-wrap"):
+                with ui.column().style("flex:3;min-width:600px;max-width:900px"):
+                    device_table = ui.table(
+                        columns=[
+                            {"name": "I4201", "label": "Gerätename", "field": "I4201"},
+                            {"name": "I4202", "label": "Hersteller", "field": "I4202"},
+                            {"name": "I4203", "label": "Typ", "field": "I4203"},
+                            {"name": "I4204", "label": "Beschreibung", "field": "I4204"},
+                            {"name": "I4206", "label": "Seriennummer", "field": "I4206"},
+                            {"name": "C2301", "label": "Kalibrierdatum", "field": "C2301"},
+                            {"name": "C2303", "label": "Ablaufdatum", "field": "C2303"},
+                        ],
+                        rows=table_rows,
+                        row_key="I4201",
+                        pagination=True,
+                        search=True,
+                        on_select=on_select,
+                    ).classes("q-mt-md")
+                    ui.button("Daten laden", on_click=fetch_data).props("color=primary").classes("q-mt-md")
+                with ui.column().style("flex:2;min-width:320px"):
+                    label_card = ui.card().style("margin-left:32px;padding:32px;")
+                    label_card.visible = False
+                    with label_card:
+                        ui.label("Label-Vorschau").classes("text-h6")
+                        label_img = ui.image("").classes("q-mb-md").style("max-width:260px;")
+                        print_button = ui.button("Drucken", on_click=do_print, disabled=True).props("color=primary")
+            with ui.footer().classes("bg-grey-2 shadow-2"):
+                expansion = ui.expansion("Status anzeigen", value=False)
+                with expansion:
+                    status_log = ui.log(max_lines=100)
 
-    # table showing relevant device information
-    table_kwargs = dict(
-        columns=table_columns,
-        rows=table_rows,
-        row_key="I4206",
-        pagination=True,
-    )
-    if "search" in inspect.signature(ui.table).parameters:
-        table_kwargs["search"] = True
-    if "rows_per_page" in inspect.signature(ui.table).parameters:
-        table_kwargs["rows_per_page"] = 10
-    try:
-        device_table = ui.table(**table_kwargs).classes("q-mt-lg")
-    except TypeError:  # pragma: no cover - compatibility fallback
-        table_kwargs.pop("search", None)
-        table_kwargs.pop("rows_per_page", None)
-        device_table = ui.table(**table_kwargs).classes("q-mt-lg")
+    # ----- Login card -----
+    login_card = ui.card().style("max-width:420px;margin:80px auto;")
+    with login_card:
+        ui.label("calServer Labeltool").classes("text-h5 text-center q-mb-md")
+        base_url = ui.input("API URL", value="https://calserver.example.com").props("outlined")
+        username = ui.input("Benutzername").props("outlined")
+        password = ui.input("Passwort", password=True).props("outlined")
+        api_key = ui.input("API Key", password=True).props("outlined")
+        ui.button("Login", on_click=handle_login).props("color=primary")
 
     ui.run(port=8080, show=False)
 
