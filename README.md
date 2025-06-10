@@ -99,6 +99,8 @@ automatisch erneuerten Let's‑Encrypt Zertifikaten starten.
    cp .env.example .env
    # DOMAIN=my.example.com
    # LETSENCRYPT_EMAIL=admin@my.example.com
+   # optional: APP_ENV=development
+   # optional: APP_CONFIG=/path/to/config.json
    ```
 
 2. Danach das Setup starten:
@@ -108,6 +110,8 @@ automatisch erneuerten Let's‑Encrypt Zertifikaten starten.
    ```
 
    Die Anwendung ist anschließend unter `https://<DOMAIN>` erreichbar.
+   Alle Variablen aus der `.env` Datei werden beim Start in den Container
+   übernommen und stehen der Anwendung zur Verfügung.
 
 ## ♻ Release Build
 
