@@ -196,7 +196,8 @@ def main() -> None:
                 inv = entry.get("inventory") or {}
                 mtag = entry.get("MTAG") or inv.get("MTAG") or "-"
                 qr_url = f"{base}/qrcode/{mtag}"
-                qr_svg = generate_qr_code_svg(qr_url)
+                qr_img = generate_qr_code(qr_url, size=80)
+                qr_svg = _pil_to_data_url(qr_img)
                 all_rows.append({
                     "I4201": inv.get("I4201") or "-",
                     "I4202": inv.get("I4202") or "-",
@@ -298,7 +299,7 @@ def main() -> None:
                     device_table.on("row-click", handle_row_click)
                     device_table.on("cell-click", handle_cell_click)
                     device_table.add_slot("body-cell-qrcode", """
-                        <q-td :props="props"><div v-html="props.value" /></q-td>
+                        <q-td :props="props"><img :src="props.value" style="width:80px;height:80px" /></q-td>
                     """)
                     device_table.add_slot("body-cell-preview", """
                         <q-td :props="props"><div v-html="props.value" /></q-td>
