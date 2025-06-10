@@ -1,17 +1,17 @@
 """Functions for rendering device and calibration label images."""
 
 from PIL import Image, ImageDraw, ImageFont
+from html import escape
 from .qrcode_utils import generate_qr_code, generate_qr_code_svg
 
 
 def svg_header() -> str:
     """Return a standard SVG header."""
 
-    return (
-        "<?xml version='1.0' encoding='UTF-8' standalone='no'?>\n"
-        "<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' "
-        "'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>\n"
-    )
+    # ``svglib`` sometimes tries to load the external DTD referenced by the
+    # standard SVG doctype which can fail in restricted environments.  A minimal
+    # XML header is sufficient and avoids that network request.
+    return "<?xml version='1.0' encoding='UTF-8' standalone='no'?>\n"
 
 FONT = ImageFont.load_default()
 
@@ -48,8 +48,8 @@ def device_label_svg(name: str, expiry: str, mtag: str) -> str:
     svg_body = f"""
 <svg width='400' height='200' xmlns='http://www.w3.org/2000/svg'>
   <rect width='100%' height='100%' fill='white'/>
-  <text x='10' y='30' font-size='16'>Gerät: {name}</text>
-  <text x='10' y='70' font-size='16'>Ablauf: {expiry}</text>
+  <text x='10' y='30' font-size='16'>Gerät: {escape(name)}</text>
+  <text x='10' y='70' font-size='16'>Ablauf: {escape(expiry)}</text>
   <g transform='translate(280,10)'>
     {qr_svg}
   </g>
@@ -65,8 +65,8 @@ def simple_device_label_svg(name: str, expiry: str, mtag: str) -> str:
     svg_body = f"""
 <svg width='400' height='200' xmlns='http://www.w3.org/2000/svg'>
   <rect width='100%' height='100%' fill='white'/>
-  <text x='200' y='40' font-size='20' text-anchor='middle'>{name}</text>
-  <text x='200' y='80' font-size='14' text-anchor='middle'>Bis: {expiry}</text>
+  <text x='200' y='40' font-size='20' text-anchor='middle'>{escape(name)}</text>
+  <text x='200' y='80' font-size='14' text-anchor='middle'>Bis: {escape(expiry)}</text>
   <g transform='translate(150,90)'>
     {qr_svg}
   </g>

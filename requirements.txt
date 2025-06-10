@@ -3,7 +3,8 @@ requests
 pillow
 qrcode
 jinja2
-cairosvg
+svglib
+reportlab
 pywin32; sys_platform == "win32"
 pycups; sys_platform != "win32"
 pytest
