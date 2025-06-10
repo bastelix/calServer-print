@@ -368,7 +368,8 @@ def main() -> None:
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
-            search_input = ui.input("Gerätename suchen", on_input=on_search_change).props("outlined clearable").classes("q-mt-sm")
+            search_input = ui.input("Gerätename suchen").props("outlined clearable").classes("q-mt-sm")
+            search_input.on("input", on_search_change)
             ui.button("Daten laden", on_click=fetch_data).props("color=primary").classes("q-mt-md")
             with ui.dialog() as label_dialog:
                 with ui.card():
