@@ -273,5 +273,5 @@ def main() -> None:
     ui.run(port=8080, show=False)
 
 
-if __name__ == "__main__":  # pragma: no cover - manual start
+if __name__ in {"__main__", "__mp_main__"}:  # pragma: no cover - manual start
     main()
