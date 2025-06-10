@@ -1,7 +1,10 @@
 """Functions for rendering device and calibration label images."""
 
 from PIL import Image, ImageDraw, ImageFont
-from .qrcode_utils import generate_qr_code, generate_qr_code_svg
+from .qrcode_utils import (
+    generate_qr_code,
+    generate_qr_code_data_url,
+)
 
 
 def svg_header() -> str:
@@ -43,14 +46,15 @@ def device_label(name: str, expiry: str, mtag: str) -> Image.Image:
 def device_label_svg(name: str, expiry: str, mtag: str) -> str:
     """Return an SVG representation of a device label."""
 
-    qr_svg = generate_qr_code_svg(mtag)
+    qr_png = generate_qr_code_data_url(mtag, size=100)
+    qr_elem = f"<image href='{qr_png}' width='100' height='100' />"
     svg_body = f"""
 <svg width='400' height='200' xmlns='http://www.w3.org/2000/svg'>
   <rect width='100%' height='100%' fill='white'/>
   <text x='10' y='30' font-size='16'>Gerät: {name}</text>
   <text x='10' y='70' font-size='16'>Ablauf: {expiry}</text>
   <g transform='translate(280,10)'>
-    {qr_svg}
+    {qr_elem}
   </g>
 </svg>
 """
@@ -60,14 +64,15 @@ def device_label_svg(name: str, expiry: str, mtag: str) -> str:
 def simple_device_label_svg(name: str, expiry: str, mtag: str) -> str:
     """Return a simplified SVG representation of a device label."""
 
-    qr_svg = generate_qr_code_svg(mtag)
+    qr_png = generate_qr_code_data_url(mtag, size=100)
+    qr_elem = f"<image href='{qr_png}' width='100' height='100' />"
     svg_body = f"""
 <svg width='400' height='200' xmlns='http://www.w3.org/2000/svg'>
   <rect width='100%' height='100%' fill='white'/>
   <text x='200' y='40' font-size='20' text-anchor='middle'>{name}</text>
   <text x='200' y='80' font-size='14' text-anchor='middle'>Bis: {expiry}</text>
   <g transform='translate(150,90)'>
-    {qr_svg}
+    {qr_elem}
   </g>
 </svg>
 """

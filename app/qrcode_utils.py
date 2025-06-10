@@ -4,6 +4,7 @@ import qrcode
 import qrcode.image.svg
 from PIL import Image
 import io
+import base64
 
 
 def generate_qr_code(data: str, size: int = 200) -> Image.Image:
@@ -43,3 +44,13 @@ def generate_qr_code_svg(data: str) -> str:
     if svg.lstrip().startswith("<?xml"):
         svg = svg.split("?>", 1)[-1]
     return svg
+
+
+def generate_qr_code_data_url(data: str, size: int = 200) -> str:
+    """Return a PNG data URL for ``data`` encoded as QR code."""
+
+    img = generate_qr_code(data, size=size)
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    encoded = base64.b64encode(buffer.getvalue()).decode()
+    return f"data:image/png;base64,{encoded}"
