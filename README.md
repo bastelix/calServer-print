@@ -71,7 +71,10 @@ Das Webinterface ist danach unter `http://localhost:8080` erreichbar.
 Wenn die Umgebungsvariable `APP_ENV` auf `development` gesetzt ist,
 werden die Login-Felder mit Demo-Zugangsdaten vorbefüllt. Ein Beispiel
 hierzu findet sich in `.env.example`, welches zudem den Eintrag
-`DOMAIN=demo.net-cal.com` für die Demo-API enthält.
+`DOMAIN=demo.net-cal.com` für die Demo-API enthält. Liegt eine `.env`
+Datei im Projektverzeichnis, wird sie beim Start über `launcher.py`
+automatisch mit **python-dotenv** eingelesen. Darin kann z.B. ein Pfad
+für `APP_CONFIG` gesetzt werden.
 
 ## ⚡ Start als Desktop-App
 
