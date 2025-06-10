@@ -1,6 +1,8 @@
 """Functions for rendering device and calibration label images."""
 
 from PIL import Image, ImageDraw, ImageFont
+import base64
+import io
 from .qrcode_utils import generate_qr_code
 
 FONT = ImageFont.load_default()
@@ -29,6 +31,25 @@ def device_label(name: str, expiry: str, mtag: str) -> Image.Image:
     qr = generate_qr_code(mtag, size=100)
     img.paste(qr, (280, 10))
     return img
+
+
+def device_label_svg(name: str, expiry: str, mtag: str) -> str:
+    """Return an SVG representation of a device label."""
+
+    qr = generate_qr_code(mtag, size=100)
+    buffer = io.BytesIO()
+    qr.save(buffer, format="PNG")
+    qr_b64 = base64.b64encode(buffer.getvalue()).decode()
+
+    svg = f"""
+<svg width='400' height='200' xmlns='http://www.w3.org/2000/svg'>
+  <rect width='100%' height='100%' fill='white'/>
+  <text x='10' y='30' font-size='16'>Gerät: {name}</text>
+  <text x='10' y='70' font-size='16'>Ablauf: {expiry}</text>
+  <image href='data:image/png;base64,{qr_b64}' x='280' y='10' width='100' height='100'/>
+</svg>
+"""
+    return svg
 
 
 def calibration_label(date: str, status: str, cert: str, qr_data: str) -> Image.Image:
