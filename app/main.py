@@ -196,10 +196,10 @@ def main() -> None:
                         label_img = ui.image("").classes("q-mb-md").style("max-width:260px;")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
-            with ui.footer().classes("bg-grey-2 shadow-2"):
-                expansion = ui.expansion("Status anzeigen", value=False)
-                with expansion:
-                    status_log = ui.log(max_lines=100)
+        with ui.footer().classes("bg-grey-2 shadow-2"):
+            expansion = ui.expansion("Status anzeigen", value=False)
+            with expansion:
+                status_log = ui.log(max_lines=100)
 
     # ----- Login card -----
     login_card = ui.card().style("max-width:420px;margin:80px auto;")
