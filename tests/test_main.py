@@ -29,9 +29,18 @@ def dummy_table_b(columns=None, rows=None, row_key=None, on_select=None):
     pass
 
 
+def dummy_table_c(columns=None, rows=None, row_key=None, on_select=None, selection="single"):
+    pass
+
+
 def test_build_table_kwargs_optional_pagination():
     kwargs_a = main._build_table_kwargs(dummy_table_a, [], None)
     assert 'pagination' in kwargs_a
 
     kwargs_b = main._build_table_kwargs(dummy_table_b, [], None)
     assert 'pagination' not in kwargs_b
+
+
+def test_build_table_kwargs_selection():
+    kwargs_c = main._build_table_kwargs(dummy_table_c, [], None)
+    assert kwargs_c.get('selection') == 'single'
