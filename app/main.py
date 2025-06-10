@@ -271,7 +271,7 @@ def main() -> None:
 
     # Label aktualisieren
     def update_label(row: Dict[str, Any] | None) -> None:
-        nonlocal current_image, selected_row
+        nonlocal current_image
         if not row:
             label_svg.content = render_preview(selected_template, "", "", "")
             placeholder_label.visible = True
@@ -287,31 +287,18 @@ def main() -> None:
         label_svg.content = render_preview(selected_template, name, expiry, qr_url)
         placeholder_label.visible = False
         print_button.enable()
-        selected_row = row
 
-    # Zeilen finden
-    def _find_row(key: Any) -> Dict[str, Any] | None:
-        if isinstance(key, dict):
-            if "I4201" in key:
-                key = key.get("I4201")
-            elif "row" in key and isinstance(key["row"], dict):
-                key = key["row"].get("I4201")
-        return next((r for r in table_rows if r["I4201"] == key), None)
 
     # Auswahl-Handler
     def on_select(e: Any) -> None:
+        nonlocal selected_row
         sel = getattr(e, "selection", None)
-        args = getattr(e, "args", None)
-        row = None
-        if isinstance(args, dict):
-            row = args.get("row") or (args.get("rows") or [None])[0]
-        elif isinstance(args, list) and args:
-            row = args[-1]
-        if row is None:
-            row = _find_row(sel)
+        if sel and isinstance(sel, list) and len(sel) > 0:
+            selected_row = sel[0]
+            update_label(selected_row)
         else:
-            row = _find_row(row)
-        update_label(row)
+            selected_row = None
+            update_label(None)
 
     # Klick auf Zeile
     def handle_row_click(e: Any) -> None:
@@ -321,28 +308,31 @@ def main() -> None:
             row = data.get("row")
         elif isinstance(data, list) and data:
             row = data[-1]
-        row = _find_row(row)
         update_label(row)
 
     # Klick auf Vorschau-Zelle
     def handle_cell_click(e: Any) -> None:
-        data = getattr(e,"args",None)
-        col = data.get("column", {}).get("name") if isinstance(data,dict) else None
+        data = getattr(e, "args", None)
+        col = data.get("column", {}).get("name") if isinstance(data, dict) else None
         if col == "preview":
-            row = _find_row(data.get("row") if isinstance(data,dict) else None)
-            dialog_label_svg.content = render_preview(
-                selected_template,
-                row["I4201"],
-                row["C2303"],
-                row["MTAG"]
-            )
-            label_dialog.open()
+            row = data.get("row") if isinstance(data, dict) else None
+            if row:
+                dialog_label_svg.content = render_preview(
+                    selected_template,
+                    row["I4201"],
+                    row["C2303"],
+                    row["MTAG"],
+                )
+                label_dialog.open()
 
     def change_template(e: Any) -> None:
         nonlocal selected_template
         if template_select:
             selected_template = template_select.value
-        update_label(selected_row)
+        if device_table and device_table.selection:
+            update_label(device_table.selection[0])
+        else:
+            update_label(None)
 
     # Drucken
     def do_print() -> None:
