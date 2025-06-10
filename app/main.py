@@ -275,6 +275,18 @@ def main() -> None:
         selected_row = row_data
         update_label(row_data)
 
+    def handle_row_click(e) -> None:
+        """Update label preview when a table row is clicked."""
+        nonlocal selected_row
+        row = getattr(e, "args", None)
+        if isinstance(row, list):
+            row = row[0] if row else None
+        if isinstance(row, dict):
+            selected_row = row
+        else:
+            selected_row = None
+        update_label(selected_row)
+
     def on_slider_change(e) -> None:
         nonlocal filter_value
         try:
@@ -305,6 +317,7 @@ def main() -> None:
                     empty_table_label = ui.label("Noch keine Daten geladen").classes("text-grey text-center q-mt-md")
                     table_kwargs = _build_table_kwargs(ui.table, table_rows, on_select)
                     device_table = ui.table(**table_kwargs).classes("q-mt-md")
+                    device_table.on("row-click", handle_row_click)
                     empty_table_label.visible = len(table_rows) == 0
                 with ui.column().classes("col-auto").style("min-width:320px"):
                     label_card = ui.card().style("padding:32px;min-height:260px;")
