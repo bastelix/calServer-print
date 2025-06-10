@@ -9,6 +9,8 @@ class DummyImage:
     def resize(self, size):
         self.size = size
         return self
+    def save(self, buffer, format=None):
+        buffer.write(b'PNG')
 
 def _stub_modules():
     qrcode_mod = types.ModuleType('qrcode')
@@ -58,3 +60,8 @@ def test_generate_qr_code_svg_string():
     svg = qrcode_utils.generate_qr_code_svg('hello')
     assert '<svg' in svg and '</svg>' in svg
     assert not svg.strip().startswith('<?xml'), 'XML header not removed'
+
+
+def test_generate_qr_code_data_url_prefix():
+    url = qrcode_utils.generate_qr_code_data_url('hello', size=100)
+    assert url.startswith('data:image/png;base64,')

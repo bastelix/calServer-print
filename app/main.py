@@ -22,7 +22,10 @@ try:
         render_label_template,
         svg_header,
     )
-    from .qrcode_utils import generate_qr_code, generate_qr_code_svg
+    from .qrcode_utils import (
+        generate_qr_code,
+        generate_qr_code_data_url,
+    )
     from .print_utils import print_label, list_printers, print_file
 except ImportError:
     from calserver_api import fetch_calibration_data
@@ -33,7 +36,10 @@ except ImportError:
         render_label_template,
         svg_header,
     )
-    from qrcode_utils import generate_qr_code, generate_qr_code_svg
+    from qrcode_utils import (
+        generate_qr_code,
+        generate_qr_code_data_url,
+    )
     from print_utils import print_label, list_printers, print_file
 
 
@@ -160,10 +166,11 @@ def main() -> None:
     }
 
     def render_preview(template: str, name: str, expiry: str, qr_data: str) -> str:
-        qr_svg = generate_qr_code_svg(qr_data)
+        qr_png = generate_qr_code_data_url(qr_data, size=200)
+        qr_elem = f"<image href='{qr_png}' width='200' height='200' />"
         if template in jinja_templates:
             tpl = jinja2.Template(jinja_templates[template])
-            body = tpl.render(I4201=name, C2303=expiry, MTAG=qr_data, QRCODE=qr_svg)
+            body = tpl.render(I4201=name, C2303=expiry, MTAG=qr_data, QRCODE=qr_elem)
             return svg_header() + body
         return render_label_template(template, name, expiry, qr_data)
 

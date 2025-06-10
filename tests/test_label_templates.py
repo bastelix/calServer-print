@@ -64,8 +64,12 @@ def generate_qr_code(data, size=200):
 def generate_qr_code_svg(data):
     return '<svg></svg>'
 
+def generate_qr_code_data_url(data, size=200):
+    return f'data:image/png;base64,{data}'
+
 qr_mod.generate_qr_code = generate_qr_code
 qr_mod.generate_qr_code_svg = generate_qr_code_svg
+qr_mod.generate_qr_code_data_url = generate_qr_code_data_url
 sys.modules["app.qrcode_utils"] = qr_mod
 
 label_templates = importlib.import_module("app.label_templates")
