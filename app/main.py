@@ -292,9 +292,10 @@ def main() -> None:
                     dialog_label_svg = ui.html(device_label_svg("","","")).style("max-width:260px;")
                     ui.button("Schließen", on_click=label_dialog.close)
             # Tabelle & Vorschau
-            with ui.row().classes("justify-center q-gutter-xl items-start"):
-                # Tabelle
-                with ui.column().style("flex:3;min-width:600px;max-width:900px"):
+            # Tabelle & Vorschau im Grid-Layout
+            with ui.grid(columns=16).classes("w-full gap-0"):
+                # Tabelle links (10 Teile)
+                with ui.column().classes("col-span-10 border p-1"):
                     filter_switch = ui.switch("Nur aktuelle", value=True, on_change=lambda e: apply_table_filter()).classes("q-mt-md")
                     ui.label("Nur Aktuelle!").bind_visibility_from(filter_switch, 'value')
                     empty_table_label = ui.label("Noch keine Daten geladen").classes("text-grey text-center q-mt-md")
@@ -308,8 +309,8 @@ def main() -> None:
                         <q-td :props="props"><div v-html="props.value" /></q-td>
                     """)
                     empty_table_label.visible = len(table_rows) == 0
-                # Vorschau rechts
-                with ui.column().style("min-width:320px;"):
+                # Vorschau rechts (6 Teile)
+                with ui.column().classes("col-span-6 border p-1"):
                     with ui.card().classes("pa-4"):
                         ui.label("Label-Vorschau").classes("text-h6")
                         row_info_label = ui.label("Bitte Gerät auswählen").classes("q-mb-md")
