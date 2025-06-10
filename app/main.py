@@ -249,9 +249,13 @@ def main() -> None:
     footer = ui.footer().classes("bg-grey-2 shadow-2")
     footer.visible = False
     with footer:
-        expansion = ui.expansion("Status anzeigen", value=False)
+        expansion = ui.expansion("Status anzeigen", value=False).classes("w-full")
         with expansion:
-            status_log = ui.log(max_lines=100)
+            status_log = (
+                ui.log(max_lines=100)
+                .classes("w-full")
+                .style("background-color:white;color:black;width:100%")
+            )
 
     ui.run(port=8080, show=False)
 
