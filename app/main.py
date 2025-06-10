@@ -50,6 +50,12 @@ def _build_table_kwargs(table_func, rows: List[Dict[str, Any]], on_select) -> Di
                 "field": "qrcode",
                 "html": True,
             },
+            {
+                "name": "preview",
+                "label": "Vorschau",
+                "field": "preview",
+                "html": True,
+            },
         ],
         rows=rows,
         row_key="I4201",
@@ -73,6 +79,10 @@ def _build_table_kwargs(table_func, rows: List[Dict[str, Any]], on_select) -> Di
         kwargs.pop("rows_per_page", None)
     if "selection" in params:
         kwargs["selection"] = "single"
+    if "html_columns" in params:
+        kwargs["html_columns"] = ["qrcode", "preview"]
+    elif any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
+        kwargs["html_columns"] = ["qrcode", "preview"]
     return kwargs
 
 
@@ -227,6 +237,7 @@ def main() -> None:
                         "MTAG": mtag_value,
                         "C2339": entry.get("C2339"),
                         "qrcode": f"<img src='{qr_data}' width='60' height='60'>",
+                        "preview": f"<a href='{qr_data}' target='_blank'>Vorschau</a>",
                     }
                 )
             apply_table_filter()
@@ -272,6 +283,14 @@ def main() -> None:
         if print_button:
             print_button.enable()
 
+    def _find_row(data) -> Dict[str, Any] | None:
+        key = None
+        if isinstance(data, dict):
+            key = data.get("I4201")
+        else:
+            key = data
+        return next((r for r in table_rows if r.get("I4201") == key), None)
+
     def on_select(e) -> None:
         nonlocal selected_row
         key = getattr(e, "selection", None)
@@ -279,13 +298,8 @@ def main() -> None:
             key = getattr(e, "args", None)
             if isinstance(key, list):
                 key = key[0] if key else None
-        row_data = None
-        if isinstance(key, dict):
-            row_data = key
-        else:
-            row_data = next((r for r in table_rows if r.get("I4201") == key), None)
-        selected_row = row_data
-        update_label(row_data)
+        selected_row = _find_row(key)
+        update_label(selected_row)
 
     def handle_row_click(e) -> None:
         """Update label preview when a table row is clicked."""
@@ -293,10 +307,7 @@ def main() -> None:
         row = getattr(e, "args", None)
         if isinstance(row, list):
             row = row[0] if row else None
-        if isinstance(row, dict):
-            selected_row = row
-        else:
-            selected_row = None
+        selected_row = _find_row(row)
         update_label(selected_row)
 
     def on_slider_change(e) -> None:
