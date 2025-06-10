@@ -32,9 +32,9 @@ Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschrift
    ```bash
    pip install -r requirements.txt
    ```
-   Das installiert auch optionale Bibliotheken wie **svglib** und
-   **reportlab**, die zur Konvertierung von SVG in PNG oder PDF genutzt
-   werden.
+   Das installiert auch optionale Bibliotheken wie **svglib**,
+   **cairosvg** und **reportlab**, die zur Konvertierung von SVG in PNG
+   oder PDF genutzt werden.
 3. (Optional) Node-Umgebung fuer die Desktop-Version einrichten:
    ```bash
    cd electron

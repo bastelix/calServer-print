@@ -4,6 +4,7 @@ pillow
 qrcode
 jinja2
 svglib
+cairosvg
 reportlab
 pywin32; sys_platform == "win32"
 pycups; sys_platform != "win32"
