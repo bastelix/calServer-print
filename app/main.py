@@ -355,11 +355,8 @@ def main() -> None:
                 
                 # Passwort
                 ui.label('Passwort').classes('block font-medium text-sm text-gray-700 mb-1')
-                with ui.row().classes('relative'):
-                    password = ui.input(placeholder='Passwort', password=True).classes(
-                        'w-full rounded-md py-2.5 px-4 border border-gray-200 bg-gray-50 focus:border-[#f84525] text-sm outline-[#f84525] transition')
-                    ui.button('', icon='visibility', on_click=lambda: password.set_password(not password._props.get('password', True))).classes(
-                        'absolute right-2 top-2 text-gray-400 bg-transparent shadow-none')
+                password = ui.input(placeholder='Passwort', password=True).classes(
+                    'w-full rounded-md py-2.5 px-4 border border-gray-200 bg-gray-50 focus:border-[#f84525] text-sm outline-[#f84525] mb-4 transition')
                 # API Key
                 ui.label('API Key').classes('block font-medium text-sm text-gray-700 mb-1 mt-4')
                 api_key = ui.input(placeholder='API Key', password=True, value="53f1871505fa8190659aaae17845bd19" if is_dev else "").classes(
