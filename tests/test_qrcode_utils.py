@@ -57,3 +57,4 @@ def test_generate_qr_code_size():
 def test_generate_qr_code_svg_string():
     svg = qrcode_utils.generate_qr_code_svg('hello')
     assert '<svg' in svg and '</svg>' in svg
+    assert not svg.strip().startswith('<?xml'), 'XML header not removed'

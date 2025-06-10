@@ -39,4 +39,7 @@ def generate_qr_code_svg(data: str) -> str:
     img = qr.make_image(image_factory=qrcode.image.svg.SvgImage)
     buffer = io.BytesIO()
     img.save(buffer)
-    return buffer.getvalue().decode()
+    svg = buffer.getvalue().decode()
+    if svg.lstrip().startswith("<?xml"):
+        svg = svg.split("?>", 1)[-1]
+    return svg
