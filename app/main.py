@@ -215,6 +215,7 @@ def main() -> None:
             else:
                 cal_list = [data] if data else []
             all_rows = []
+            base_domain = stored_login.get("base_url", base_url.value).rstrip("/")
             for entry in cal_list:
                 inv = entry.get("inventory") or {}
                 mtag_value = (
@@ -224,7 +225,8 @@ def main() -> None:
                     or inv.get("mtag")
                     or "-"
                 )
-                qr_svg = generate_qr_code_svg(mtag_value)
+                qr_value = f"{base_domain}/qrcode/{mtag_value}"
+                qr_svg = generate_qr_code_svg(qr_value)
                 qr_data = base64.b64encode(qr_svg.encode()).decode()
                 qr_data = f"data:image/svg+xml;base64,{qr_data}"
                 all_rows.append(
@@ -271,14 +273,16 @@ def main() -> None:
         name = row.get("I4201", "")
         expiry = row.get("C2303", "")
         mtag = row.get("MTAG", "")
+        base_domain = stored_login.get("base_url", base_url.value).rstrip("/")
+        qr_value = f"{base_domain}/qrcode/{mtag}"
         if not mtag or mtag == "-":
             push_status("MTAG fehlt für ausgewähltes Gerät")
         if row_info_label:
             row_info_label.set_text(f"I4201: {name}, C2303: {expiry}")
-        img = device_label(name, expiry, mtag)
+        img = device_label(name, expiry, qr_value)
         current_image = img
         if label_svg:
-            label_svg.content = device_label_svg(name, expiry, mtag)
+            label_svg.content = device_label_svg(name, expiry, qr_value)
             label_svg.visible = True
         if placeholder_label:
             placeholder_label.visible = False
