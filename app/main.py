@@ -314,7 +314,9 @@ def main() -> None:
             # Dialog
             with ui.dialog() as label_dialog:
                 with ui.card():
-                    dialog_label_svg = ui.html(render_label_template(selected_template, "", "", "")).style("max-width:260px;")
+                    dialog_label_svg = ui.html(
+                        render_label_template(selected_template, "", "", "")
+                    ).style("max-width:420px;")
                     ui.button("Schließen", on_click=label_dialog.close)
             # Tabelle & Vorschau
             # Tabelle & Vorschau im Grid-Layout nebeneinander
@@ -346,7 +348,9 @@ def main() -> None:
                         ).classes("q-mb-md")
                         placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
                         placeholder_label.visible = False
-                        label_svg = ui.html(render_label_template(selected_template, "", "", "")).style("max-width:260px;;;")
+                        label_svg = ui.html(
+                            render_label_template(selected_template, "", "", "")
+                        ).style("max-width:420px;")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
         # Footer
