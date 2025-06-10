@@ -15,10 +15,12 @@ from nicegui import ui
 try:
     from .calserver_api import fetch_calibration_data
     from .label_templates import device_label, device_label_svg
+    from .qrcode_utils import generate_qr_code
     from .print_utils import print_label
 except ImportError:  # pragma: no cover - running as script
     from calserver_api import fetch_calibration_data
     from label_templates import device_label, device_label_svg
+    from qrcode_utils import generate_qr_code
     from print_utils import print_label
 
 
@@ -42,6 +44,12 @@ def _build_table_kwargs(table_func, rows: List[Dict[str, Any]], on_select) -> Di
             {"name": "I4206", "label": "Seriennummer", "field": "I4206"},
             {"name": "C2301", "label": "Kalibrierdatum", "field": "C2301"},
             {"name": "C2303", "label": "Ablaufdatum", "field": "C2303"},
+            {
+                "name": "qrcode",
+                "label": "QR-Code",
+                "field": "qrcode",
+                "html": True,
+            },
         ],
         rows=rows,
         row_key="I4201",
@@ -196,6 +204,9 @@ def main() -> None:
             all_rows = []
             for entry in cal_list:
                 inv = entry.get("inventory") or {}
+                mtag_value = entry.get("MTAG") or inv.get("MTAG") or "-"
+                qr_img = generate_qr_code(mtag_value, size=60)
+                qr_data = _pil_to_data_url(qr_img)
                 all_rows.append(
                     {
                         "I4201": inv.get("I4201") or "-",
@@ -205,8 +216,9 @@ def main() -> None:
                         "I4206": inv.get("I4206") or "-",
                         "C2301": entry.get("C2301") or "-",
                         "C2303": entry.get("C2303") or "-",
-                        "MTAG": entry.get("MTAG") or inv.get("MTAG") or "-",
+                        "MTAG": mtag_value,
                         "C2339": entry.get("C2339"),
+                        "qrcode": f"<img src='{qr_data}' width='60' height='60'>",
                     }
                 )
             apply_table_filter()
@@ -225,10 +237,10 @@ def main() -> None:
         if not row:
             current_image = None
             if label_svg:
-                label_svg.content = ""
-                label_svg.visible = False
+                label_svg.content = device_label_svg("", "", "")
+                label_svg.visible = True
             if placeholder_label:
-                placeholder_label.visible = True
+                placeholder_label.visible = False
             if print_button:
                 print_button.disable()
             return
@@ -299,8 +311,9 @@ def main() -> None:
                     with label_card:
                         ui.label("Label-Vorschau").classes("text-h6")
                         placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
-                        label_svg = ui.html("").classes("q-mb-md").style("max-width:260px;")
-                        label_svg.visible = False
+                        placeholder_label.visible = False
+                        label_svg = ui.html(device_label_svg("", "", "")).classes("q-mb-md").style("max-width:260px;")
+                        label_svg.visible = True
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
         footer = ui.footer().classes("bg-grey-2 shadow-2")
