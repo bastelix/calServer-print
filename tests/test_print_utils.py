@@ -104,3 +104,55 @@ def test_print_label_cups_cleanup(monkeypatch):
     assert tmp.closed
     assert unlinked == [tmp.name]
 
+
+def test_print_file_unsupported(monkeypatch):
+    pu = _load_print_utils()
+    monkeypatch.setattr(pu.platform, 'system', lambda: 'Other')
+    with pytest.raises(RuntimeError):
+        pu.print_file('dummy.pdf', 'printer')
+
+
+def test_print_file_missing_dependency(monkeypatch):
+    pu = _load_print_utils(with_win32=False, with_cups=False)
+    monkeypatch.setattr(pu.platform, 'system', lambda: 'Linux')
+    with pytest.raises(RuntimeError):
+        pu.print_file('dummy.pdf', 'printer')
+
+
+def test_print_file_windows(monkeypatch):
+    pu = _load_print_utils()
+    monkeypatch.setattr(pu.platform, 'system', lambda: 'Windows')
+    calls = {}
+    monkeypatch.setattr(pu, 'win32print', types.SimpleNamespace(
+        OpenPrinter=lambda p: calls.setdefault('open', True) or 'h',
+        StartDocPrinter=lambda *a: calls.setdefault('startdoc', True),
+        StartPagePrinter=lambda *a: calls.setdefault('startpage', True),
+        WritePrinter=lambda *a: calls.setdefault('write', True),
+        EndPagePrinter=lambda *a: calls.setdefault('endpage', True),
+        EndDocPrinter=lambda *a: calls.setdefault('enddoc', True),
+        ClosePrinter=lambda *a: calls.setdefault('close', True),
+    ), raising=False)
+    class DummyR:
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc, tb):
+            pass
+        def read(self):
+            return b''
+
+    with monkeypatch.context() as m:
+        m.setattr('builtins.open', lambda *a, **k: DummyR())
+        pu.print_file('dummy.pdf', 'printer')
+    assert calls.get('close')
+
+
+def test_print_file_cups(monkeypatch):
+    pu = _load_print_utils()
+    monkeypatch.setattr(pu.platform, 'system', lambda: 'Linux')
+    printed = {}
+    monkeypatch.setattr(pu, 'cups', types.SimpleNamespace(
+        Connection=lambda: types.SimpleNamespace(printFile=lambda p, f, t, o: printed.setdefault('file', f))
+    ))
+    pu.print_file('dummy.pdf', 'printer')
+    assert printed.get('file') == 'dummy.pdf'
+

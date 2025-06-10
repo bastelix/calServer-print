@@ -23,7 +23,7 @@ try:
         svg_header,
     )
     from .qrcode_utils import generate_qr_code, generate_qr_code_svg
-    from .print_utils import print_label, list_printers
+    from .print_utils import print_label, list_printers, print_file
 except ImportError:
     from calserver_api import fetch_calibration_data
     from label_templates import (
@@ -34,7 +34,7 @@ except ImportError:
         svg_header,
     )
     from qrcode_utils import generate_qr_code, generate_qr_code_svg
-    from print_utils import print_label, list_printers
+    from print_utils import print_label, list_printers, print_file
 
 
 def _pil_to_data_url(image: Image.Image) -> str:
@@ -105,11 +105,14 @@ def main() -> None:
     all_rows: List[Dict[str, Any]] = []
     selected_row: Dict[str, Any] | None = None
     current_image: Image.Image | None = None
+    current_svg: str | None = None
 
     # Printer selection
     available_printers: List[str] = []
     selected_printer: str | None = None
     printer_select: ui.select | None = None
+    pdf_option: ui.checkbox | None = None
+    png_option: ui.checkbox | None = None
 
     # UI-Elemente
     status_log: ui.log | None = None
@@ -198,12 +201,13 @@ def main() -> None:
 
     # Logout-Handler
     def logout() -> None:
-        nonlocal selected_row, current_image, status_log, label_svg, print_button
-        nonlocal device_table, placeholder_label, empty_table_label, row_info_label
+        nonlocal selected_row, current_image, current_svg, status_log, label_svg, print_button
+        nonlocal device_table, placeholder_label, empty_table_label, row_info_label, pdf_option, png_option
         push_status("Logged out")
         stored_login.clear()
         selected_row = None
         current_image = None
+        current_svg = None
         status_log = None
         label_svg = None
         print_button = None
@@ -211,6 +215,8 @@ def main() -> None:
         placeholder_label = None
         empty_table_label = None
         row_info_label = None
+        pdf_option = None
+        png_option = None
         _navigate("/")
 
     # Filter-Logik
@@ -279,12 +285,14 @@ def main() -> None:
 
     # Label aktualisieren
     def update_label(row: Dict[str, Any] | None) -> None:
-        nonlocal current_image, selected_printer
+        nonlocal current_image, current_svg, selected_printer
         if not row:
             label_svg.content = render_preview(selected_template, "", "", "")
             placeholder_label.visible = True
             print_button.disable()
             row_info_label.set_text("Keine Zeile ausgewählt")
+            current_image = None
+            current_svg = None
             return
         name = row["I4201"]
         expiry = row["C2303"]
@@ -292,7 +300,8 @@ def main() -> None:
         qr_url = f"{stored_login['base_url'].rstrip('/')}/qrcode/{mtag}"
         row_info_label.set_text(f"I4201: {name}, C2303: {expiry}")
         current_image = device_label(name, expiry, qr_url)
-        label_svg.content = render_preview(selected_template, name, expiry, qr_url)
+        current_svg = render_preview(selected_template, name, expiry, qr_url)
+        label_svg.content = current_svg
         placeholder_label.visible = False
         if selected_printer:
             print_button.enable()
@@ -358,12 +367,35 @@ def main() -> None:
 
     # Drucken
     def do_print() -> None:
-        nonlocal selected_printer
-        if not current_image or not selected_printer:
+        nonlocal selected_printer, current_svg, pdf_option, png_option
+        if (not current_image and not current_svg) or not selected_printer:
             push_status("Bitte zuerst Datensatz und Drucker wählen")
             return
         try:
-            print_label(current_image, selected_printer)
+            if pdf_option and pdf_option.value:
+                import tempfile
+                import cairosvg
+                from .print_utils import print_file
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+                    tmp_path = tmp.name
+                cairosvg.svg2pdf(bytestring=current_svg.encode('utf-8'), write_to=tmp_path)
+                try:
+                    print_file(tmp_path, selected_printer)
+                finally:
+                    os.unlink(tmp_path)
+            elif png_option and png_option.value:
+                import tempfile
+                import cairosvg
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
+                    tmp_path = tmp.name
+                cairosvg.svg2png(bytestring=current_svg.encode('utf-8'), write_to=tmp_path)
+                img = Image.open(tmp_path)
+                try:
+                    print_label(img, selected_printer)
+                finally:
+                    os.unlink(tmp_path)
+            else:
+                print_label(current_image, selected_printer)
             push_status(f"Printed on: {selected_printer}")
         except Exception as e:
             push_status(f"Print error: {e}")
@@ -373,6 +405,7 @@ def main() -> None:
         nonlocal status_log, label_svg, print_button, placeholder_label, row_info_label
         nonlocal device_table, empty_table_label, filter_switch, search_input, label_dialog, dialog_label_svg
         nonlocal template_select, printer_select, available_printers, selected_printer
+        nonlocal pdf_option, png_option
 
         try:
             available_printers = list_printers()
@@ -432,6 +465,8 @@ def main() -> None:
                             value=selected_printer,
                             on_change=on_printer_change,
                         ).classes("q-mb-md")
+                        pdf_option = ui.checkbox("SVG → PDF").classes("q-mb-sm")
+                        png_option = ui.checkbox("SVG → PNG").classes("q-mb-sm")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
         # Footer

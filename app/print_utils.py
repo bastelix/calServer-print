@@ -75,3 +75,30 @@ def print_label(image: Image.Image, printer_name: str) -> None:
 
     else:
         raise RuntimeError("Unsupported OS or printing not configured")
+
+
+def print_file(file_path: str, printer_name: str) -> None:
+    """Send the given file to ``printer_name``.
+
+    This function prints arbitrary files like PDFs using platform specific
+    methods. On CUPS based systems :func:`cups.Connection.printFile` is used.
+    On Windows the file is sent directly to the printer using ``win32print``.
+    """
+
+    if platform.system() == 'Windows' and win32print:
+        with open(file_path, 'rb') as f:
+            data = f.read()
+        hPrinter = win32print.OpenPrinter(printer_name)
+        try:
+            hJob = win32print.StartDocPrinter(hPrinter, 1, ('Label', None, 'RAW'))
+            win32print.StartPagePrinter(hPrinter)
+            win32print.WritePrinter(hPrinter, data)
+            win32print.EndPagePrinter(hPrinter)
+            win32print.EndDocPrinter(hPrinter)
+        finally:
+            win32print.ClosePrinter(hPrinter)
+    elif platform.system() in ('Linux', 'Darwin') and cups:
+        conn = cups.Connection()
+        conn.printFile(printer_name, file_path, 'Label', {})
+    else:
+        raise RuntimeError("Unsupported OS or printing not configured")
