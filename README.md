@@ -32,6 +32,8 @@ Ziel des Projektes ist es, das Erstellen von Kalibrierungs- und Geraetebeschrift
    ```bash
    pip install -r requirements.txt
    ```
+   Das installiert auch optionale Bibliotheken wie **cairosvg**,
+   die fuer PDF- oder PNG-Druck benoetigt werden.
 3. (Optional) Node-Umgebung fuer die Desktop-Version einrichten:
    ```bash
    cd electron
