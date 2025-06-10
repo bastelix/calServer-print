@@ -310,7 +310,7 @@ def main() -> None:
                         ui.label("Label-Vorschau").classes("text-h6")
                         row_info_label = ui.label("Bitte Gerät auswählen").classes("q-mb-md")
                         placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
-                        placeholder_label.hide()
+                        placeholder_label.visible = False
                         label_svg = ui.html(device_label_svg("","","")).style("max-width:260px;;;")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
