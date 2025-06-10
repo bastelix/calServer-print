@@ -85,19 +85,32 @@ def calibration_label(date: str, status: str, cert: str, qr_data: str) -> Image.
     return img
 
 
-# Mapping of template names to functions returning SVG strings
+# Mapping of template names to functions returning SVG strings. Additional
+# functions following the ``*_label_svg`` naming scheme will be picked up
+# automatically.
 LABEL_TEMPLATE_FUNCTIONS = {
     "Standard": device_label_svg,
     "Einfach": simple_device_label_svg,
 }
 
 
+def _discover_template_functions() -> dict[str, callable]:
+    """Return mapping of template names to template functions."""
+    mapping = dict(LABEL_TEMPLATE_FUNCTIONS)
+    for name, func in globals().items():
+        if callable(func) and name.endswith("_label_svg") and func not in mapping.values():
+            label = name.replace("_label_svg", "").replace("_", " ").title()
+            mapping[label] = func
+    return mapping
+
+
 def available_label_templates() -> list[str]:
     """Return the list of available label template names."""
-    return list(LABEL_TEMPLATE_FUNCTIONS.keys())
+    return list(_discover_template_functions().keys())
 
 
 def render_label_template(template: str, name: str, expiry: str, mtag: str) -> str:
     """Render the given template name using the provided parameters."""
-    func = LABEL_TEMPLATE_FUNCTIONS.get(template, device_label_svg)
+    mapping = _discover_template_functions()
+    func = mapping.get(template, mapping.get("Standard"))
     return func(name, expiry, mtag)
