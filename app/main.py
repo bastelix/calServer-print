@@ -292,10 +292,10 @@ def main() -> None:
                     dialog_label_svg = ui.html(device_label_svg("","","")).style("max-width:260px;")
                     ui.button("Schließen", on_click=label_dialog.close)
             # Tabelle & Vorschau
-            # Tabelle & Vorschau im flex-Layout
-            with ui.row().classes('flex flex-col md:flex-row w-full gap-4'):
-                # Tabelle links
-                with ui.column().classes('w-full md:w-2/3 border p-1'):
+            # Tabelle & Vorschau im Grid-Layout nebeneinander
+            with ui.row().classes('grid grid-cols-3 w-full gap-4'):
+                # Tabelle links (nimmt 2/3 ein)
+                with ui.column().classes('col-span-2 border p-1'):
                     filter_switch = ui.switch("Nur aktuelle", value=True, on_change=lambda e: apply_table_filter()).classes("q-mt-md")
                     ui.label("Nur Aktuelle!").bind_visibility_from(filter_switch, 'value')
                     empty_table_label = ui.label("Noch keine Daten geladen").classes("text-grey text-center q-mt-md")
@@ -310,7 +310,7 @@ def main() -> None:
                     """)
                     empty_table_label.visible = len(table_rows) == 0
                 # Vorschau rechts
-                with ui.column().classes('w-full md:w-1/3 border p-1'):
+                with ui.column().classes('col-span-1 border p-1'):
                     with ui.card().classes("pa-4"):
                         ui.label("Label-Vorschau").classes("text-h6")
                         row_info_label = ui.label("Bitte Gerät auswählen").classes("q-mb-md")
