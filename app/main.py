@@ -92,7 +92,6 @@ def main() -> None:
     current_image: Image.Image | None = None
 
     status_log: ui.log | None = None
-    label_img: ui.image | None = None
     label_svg: ui.html | None = None
     print_button: ui.button | None = None
     label_card: ui.card | None = None
@@ -210,9 +209,6 @@ def main() -> None:
         nonlocal current_image
         if not row:
             current_image = None
-            if label_img:
-                label_img.set_source("")
-                label_img.visible = False
             if label_svg:
                 label_svg.content = ""
                 label_svg.visible = False
@@ -229,9 +225,6 @@ def main() -> None:
             push_status("MTAG fehlt für ausgewähltes Gerät")
         img = device_label(name, expiry, mtag)
         current_image = img
-        if label_img:
-            label_img.set_source(_pil_to_data_url(img))
-            label_img.visible = True
         if label_svg:
             label_svg.content = device_label_svg(name, expiry, mtag)
             label_svg.visible = True
@@ -265,11 +258,12 @@ def main() -> None:
             push_status(f"Print error: {e}")
 
     def show_main_ui() -> None:
-        nonlocal status_log, label_img, label_svg, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_slider
+        nonlocal status_log, label_svg, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_slider
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
-            with ui.row().classes("justify-center q-gutter-xl flex-wrap"):
+            # table and label preview side by side
+            with ui.row().classes("justify-center q-gutter-xl items-start"):
                 with ui.column().style("flex:3;min-width:600px;max-width:900px"):
                     empty_table_label = ui.label("Noch keine Daten geladen").classes("text-grey text-center q-mt-md")
                     filter_slider = ui.slider(min=0, max=2, step=1, value=1, on_change=on_slider_change).props("label-always").classes("q-mt-md")
@@ -284,7 +278,6 @@ def main() -> None:
                         placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
                         label_svg = ui.html("").classes("q-mb-md").style("max-width:260px;")
                         label_svg.visible = False
-                        label_img = ui.image("").style("display:none;")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
         footer = ui.footer().classes("bg-grey-2 shadow-2")
