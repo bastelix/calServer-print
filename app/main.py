@@ -332,8 +332,8 @@ def main() -> None:
         domain = os.getenv("DOMAIN", "demo.net-cal.com" if is_dev else "calserver.example.com")
         default_url = f"https://{domain}" if not domain.startswith("http") else domain
     
-        with ui.row().classes('min-h-screen flex items-center justify-center bg-[#f8f4f3]'):
-            with ui.column().classes('w-full max-w-md bg-white rounded-2xl shadow-lg px-8 py-8 mx-2'):
+        with ui.row().classes('min-h-screen w-screen flex items-center justify-center bg-[#f8f4f3]'):
+            with ui.column().classes('w-full max-w-lg bg-white rounded-2xl shadow-lg px-8 py-6 mx-2 items-center'):
                 # Logo und Titel
                 ui.html("""
                     <div class="flex items-center justify-center mb-6">
