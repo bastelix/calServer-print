@@ -226,8 +226,9 @@ def main() -> None:
         rows=table_rows,
         row_key="I4206",
         pagination=True,
-        search=True,
     )
+    if "search" in inspect.signature(ui.table).parameters:
+        table_kwargs["search"] = True
     if "rows_per_page" in inspect.signature(ui.table).parameters:
         table_kwargs["rows_per_page"] = 10
     device_table = ui.table(**table_kwargs).classes("q-mt-lg")
