@@ -262,15 +262,15 @@ def main() -> None:
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
-            # table and label preview side by side
+            filter_slider = ui.slider(min=0, max=2, step=1, value=1, on_change=on_slider_change).props("label-always").classes("q-mt-md")
+            ui.button("Daten laden", on_click=fetch_data).props("color=primary").classes("q-mt-md")
+            # table and label preview side by side below controls
             with ui.row().classes("justify-center q-gutter-xl items-start"):
                 with ui.column().style("flex:3;min-width:600px;max-width:900px"):
                     empty_table_label = ui.label("Noch keine Daten geladen").classes("text-grey text-center q-mt-md")
-                    filter_slider = ui.slider(min=0, max=2, step=1, value=1, on_change=on_slider_change).props("label-always").classes("q-mt-md")
                     table_kwargs = _build_table_kwargs(ui.table, table_rows, on_select)
                     device_table = ui.table(**table_kwargs).classes("q-mt-md")
                     empty_table_label.visible = len(table_rows) == 0
-                    ui.button("Daten laden", on_click=fetch_data).props("color=primary").classes("q-mt-md")
                 with ui.column().style("flex:2;min-width:320px"):
                     label_card = ui.card().style("margin-left:32px;padding:32px;min-height:260px;")
                     with label_card:
