@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import io
 import json
+import os
 import inspect
 from typing import Any, Dict, List
 
@@ -203,10 +204,27 @@ def main() -> None:
     login_card = ui.card().style("max-width:420px;margin:80px auto;")
     with login_card:
         ui.label("calServer Labeltool").classes("text-h5 text-center q-mb-md")
-        base_url = ui.input("API URL", value="https://calserver.example.com").props("outlined")
-        username = ui.input("Benutzername").props("outlined")
+
+        # Prefill login fields in development mode. The DOMAIN environment
+        # variable determines the default URL. If APP_ENV is set to
+        # ``development`` additional credentials are populated as well.
+        is_dev = os.getenv("APP_ENV") == "development"
+        if is_dev:
+            domain = os.getenv("DOMAIN", "demo.net-cal.com")
+        else:
+            domain = os.getenv("DOMAIN", "calserver.example.com")
+        default_url = domain if domain.startswith("http") else f"https://{domain}"
+        base_url = ui.input("API URL", value=default_url).props("outlined")
+        username = ui.input(
+            "Benutzername",
+            value="api-demo@calhelp.de" if is_dev else "",
+        ).props("outlined")
         password = ui.input("Passwort", password=True).props("outlined")
-        api_key = ui.input("API Key", password=True).props("outlined")
+        api_key = ui.input(
+            "API Key",
+            password=True,
+            value="53f1871505fa8190659aaae17845bd19" if is_dev else "",
+        ).props("outlined")
         ui.button("Login", on_click=handle_login).props("color=primary")
 
     ui.run(port=8080, show=False)

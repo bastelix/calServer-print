@@ -68,6 +68,11 @@ python run.py
 
 Das Webinterface ist danach unter `http://localhost:8080` erreichbar.
 
+Wenn die Umgebungsvariable `APP_ENV` auf `development` gesetzt ist,
+werden die Login-Felder mit Demo-Zugangsdaten vorbefüllt. Ein Beispiel
+hierzu findet sich in `.env.example`, welches zudem den Eintrag
+`DOMAIN=demo.net-cal.com` für die Demo-API enthält.
+
 ## ⚡ Start als Desktop-App
 
 Im `electron`-Verzeichnis befinden sich die Dateien fuer die Electron-Anwendung. Nach der Installation der Node-Abhaengigkeiten laesst sich die App mit
