@@ -7,11 +7,10 @@ from .qrcode_utils import generate_qr_code, generate_qr_code_svg
 def svg_header() -> str:
     """Return a standard SVG header."""
 
-    return (
-        "<?xml version='1.0' encoding='UTF-8' standalone='no'?>\n"
-        "<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' "
-        "'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>\n"
-    )
+    # ``svglib`` sometimes tries to load the external DTD referenced by the
+    # standard SVG doctype which can fail in restricted environments.  A minimal
+    # XML header is sufficient and avoids that network request.
+    return "<?xml version='1.0' encoding='UTF-8' standalone='no'?>\n"
 
 FONT = ImageFont.load_default()
 
