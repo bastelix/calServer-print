@@ -14,11 +14,11 @@ from nicegui import ui
 
 try:
     from .calserver_api import fetch_calibration_data
-    from .label_templates import device_label
+    from .label_templates import device_label, device_label_svg
     from .print_utils import print_label
 except ImportError:  # pragma: no cover - running as script
     from calserver_api import fetch_calibration_data
-    from label_templates import device_label
+    from label_templates import device_label, device_label_svg
     from print_utils import print_label
 
 
@@ -93,6 +93,7 @@ def main() -> None:
 
     status_log: ui.log | None = None
     label_img: ui.image | None = None
+    label_svg: ui.html | None = None
     print_button: ui.button | None = None
     label_card: ui.card | None = None
     placeholder_label: ui.label | None = None
@@ -212,6 +213,9 @@ def main() -> None:
             if label_img:
                 label_img.set_source("")
                 label_img.visible = False
+            if label_svg:
+                label_svg.content = ""
+                label_svg.visible = False
             if placeholder_label:
                 placeholder_label.visible = True
             if print_button:
@@ -228,6 +232,9 @@ def main() -> None:
         if label_img:
             label_img.set_source(_pil_to_data_url(img))
             label_img.visible = True
+        if label_svg:
+            label_svg.content = device_label_svg(name, expiry, mtag)
+            label_svg.visible = True
         if placeholder_label:
             placeholder_label.visible = False
         if print_button:
@@ -258,7 +265,7 @@ def main() -> None:
             push_status(f"Print error: {e}")
 
     def show_main_ui() -> None:
-        nonlocal status_log, label_img, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_slider
+        nonlocal status_log, label_img, label_svg, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_slider
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
@@ -275,8 +282,9 @@ def main() -> None:
                     with label_card:
                         ui.label("Label-Vorschau").classes("text-h6")
                         placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
-                        label_img = ui.image("").classes("q-mb-md").style("max-width:260px;")
-                        label_img.visible = False
+                        label_svg = ui.html("", sanitize=False).classes("q-mb-md").style("max-width:260px;")
+                        label_svg.visible = False
+                        label_img = ui.image("").style("display:none;")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
         footer = ui.footer().classes("bg-grey-2 shadow-2")

@@ -13,6 +13,9 @@ class DummyImage:
     def paste(self, img, position):
         self.pasted.append((img, position))
 
+    def save(self, buffer, format=None):
+        buffer.write(b"dummy")
+
 
 def new(mode, size, color="white"):
     return DummyImage(size=size, color=color)
@@ -89,3 +92,11 @@ def test_calibration_label_contents():
     assert "Date: 2023-01-01" in texts[0]
     assert "Status: OK" in texts[1]
     assert "Cert: C123" in texts[2]
+
+
+def test_device_label_svg_contents():
+    svg = label_templates.device_label_svg("Device", "2025-01-01", "MT123")
+    assert "<svg" in svg
+    assert "Gerät: Device" in svg
+    assert "Ablauf: 2025-01-01" in svg
+    assert "data:image/png;base64" in svg
