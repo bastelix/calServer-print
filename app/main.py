@@ -276,7 +276,7 @@ def main() -> None:
 
     # Main UI aufbauen
     def show_main_ui() -> None:
-        nonlocal status_log, label_svg, print_button, placeholder_label, row_info_label,
+        nonlocal status_log, label_svg, print_button, placeholder_label, row_info_label
         nonlocal device_table, empty_table_label, filter_switch, search_input, label_dialog, dialog_label_svg
         with ui.column():
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
