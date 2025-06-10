@@ -104,6 +104,7 @@ def main() -> None:
     print_button: ui.button | None = None
     label_card: ui.card | None = None
     placeholder_label: ui.label | None = None
+    row_info_label: ui.label | None = None
     device_table: ui.table | None = None
     empty_table_label: ui.label | None = None
     main_layout: ui.column | None = None
@@ -151,7 +152,7 @@ def main() -> None:
     def logout() -> None:
         nonlocal selected_row, current_image
         nonlocal status_log, label_svg, print_button, label_card, device_table
-        nonlocal placeholder_label, empty_table_label, main_layout, filter_slider
+        nonlocal placeholder_label, empty_table_label, main_layout, filter_slider, row_info_label
         push_status("Logged out")
         stored_login.clear()
         selected_row = None
@@ -162,6 +163,7 @@ def main() -> None:
         label_card = None
         device_table = None
         placeholder_label = None
+        row_info_label = None
         empty_table_label = None
         main_layout = None
         filter_slider = None
@@ -204,7 +206,13 @@ def main() -> None:
             all_rows = []
             for entry in cal_list:
                 inv = entry.get("inventory") or {}
-                mtag_value = entry.get("MTAG") or inv.get("MTAG") or "-"
+                mtag_value = (
+                    entry.get("MTAG")
+                    or entry.get("mtag")
+                    or inv.get("MTAG")
+                    or inv.get("mtag")
+                    or "-"
+                )
                 qr_img = generate_qr_code(mtag_value, size=60)
                 qr_data = _pil_to_data_url(qr_img)
                 all_rows.append(
@@ -233,7 +241,7 @@ def main() -> None:
                 empty_table_label.visible = True
 
     def update_label(row: Dict[str, Any] | None) -> None:
-        nonlocal current_image
+        nonlocal current_image, row_info_label
         if not row:
             current_image = None
             if label_svg:
@@ -243,6 +251,8 @@ def main() -> None:
                 placeholder_label.visible = False
             if print_button:
                 print_button.disable()
+            if row_info_label:
+                row_info_label.set_text("Keine Zeile ausgewählt")
             return
 
         name = row.get("I4201", "")
@@ -250,6 +260,8 @@ def main() -> None:
         mtag = row.get("MTAG", "")
         if not mtag or mtag == "-":
             push_status("MTAG fehlt für ausgewähltes Gerät")
+        if row_info_label:
+            row_info_label.set_text(f"I4201: {name}, C2303: {expiry}")
         img = device_label(name, expiry, mtag)
         current_image = img
         if label_svg:
@@ -305,7 +317,7 @@ def main() -> None:
             push_status(f"Print error: {e}")
 
     def show_main_ui() -> None:
-        nonlocal status_log, label_svg, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_slider
+        nonlocal status_log, label_svg, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_slider, row_info_label
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
@@ -323,6 +335,7 @@ def main() -> None:
                     label_card = ui.card().style("padding:32px;min-height:260px;")
                     with label_card:
                         ui.label("Label-Vorschau").classes("text-h6")
+                        row_info_label = ui.label("Bitte Gerät auswählen").classes("q-mb-md")
                         placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
                         placeholder_label.visible = False
                         label_svg = ui.html(device_label_svg("", "", "")).classes("q-mb-md").style("max-width:260px;")

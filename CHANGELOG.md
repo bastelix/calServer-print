@@ -1,4 +1,6 @@
 # Changelog
+# v1.0.16 - 2025-06-10
+- improve label preview and handle lowercase MTAG
 
 # v1.0.15 - 2025-06-09
 - fix print utils test initialization
