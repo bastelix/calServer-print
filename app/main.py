@@ -6,6 +6,7 @@ import base64
 import io
 import json
 import os
+import inspect
 from typing import Any, Dict, List
 
 from PIL import Image
@@ -166,7 +167,7 @@ def main() -> None:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
             with ui.row().classes("justify-center q-gutter-xl flex-wrap"):
                 with ui.column().style("flex:3;min-width:600px;max-width:900px"):
-                    device_table = ui.table(
+                    table_kwargs = dict(
                         columns=[
                             {"name": "I4201", "label": "Gerätename", "field": "I4201"},
                             {"name": "I4202", "label": "Hersteller", "field": "I4202"},
@@ -179,9 +180,13 @@ def main() -> None:
                         rows=table_rows,
                         row_key="I4201",
                         pagination=True,
-                        search=True,
                         on_select=on_select,
-                    ).classes("q-mt-md")
+                    )
+                    if "search" in inspect.signature(ui.table).parameters:
+                        table_kwargs["search"] = True
+                    if "rows_per_page" in inspect.signature(ui.table).parameters:
+                        table_kwargs["rows_per_page"] = 10
+                    device_table = ui.table(**table_kwargs).classes("q-mt-md")
                     ui.button("Daten laden", on_click=fetch_data).props("color=primary").classes("q-mt-md")
                 with ui.column().style("flex:2;min-width:320px"):
                     label_card = ui.card().style("margin-left:32px;padding:32px;")
