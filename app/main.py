@@ -1,6 +1,7 @@
 """NiceGUI based user interface for printing calibration labels."""
 
 import json
+import inspect
 import io
 import base64
 from PIL import Image
@@ -220,14 +221,16 @@ def main() -> None:
         login_status = ui.label("").classes("text-positive")
 
     # table showing relevant device information
-    device_table = ui.table(
+    table_kwargs = dict(
         columns=table_columns,
         rows=table_rows,
         row_key="I4206",
         pagination=True,
-        rows_per_page=10,
         search=True,
-    ).classes("q-mt-lg")
+    )
+    if "rows_per_page" in inspect.signature(ui.table).parameters:
+        table_kwargs["rows_per_page"] = 10
+    device_table = ui.table(**table_kwargs).classes("q-mt-lg")
 
     ui.run(port=8080, show=False)
 
