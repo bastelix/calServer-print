@@ -282,7 +282,7 @@ def main() -> None:
                     with label_card:
                         ui.label("Label-Vorschau").classes("text-h6")
                         placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
-                        label_svg = ui.html("", sanitize=False).classes("q-mb-md").style("max-width:260px;")
+                        label_svg = ui.html("").classes("q-mb-md").style("max-width:260px;")
                         label_svg.visible = False
                         label_img = ui.image("").style("display:none;")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
