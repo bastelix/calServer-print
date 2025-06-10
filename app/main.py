@@ -73,8 +73,12 @@ def main() -> None:
     device_table: ui.table | None = None
     empty_table_label: ui.label | None = None
     main_layout: ui.column | None = None
-    login_card: ui.card | None = None
-    footer: ui.footer | None = None
+
+    # login form elements (initialized on the login page)
+    base_url: ui.input | None = None
+    username: ui.input | None = None
+    password: ui.input | None = None
+    api_key: ui.input | None = None
 
     def push_status(msg: str) -> None:
         if status_log:
@@ -82,7 +86,6 @@ def main() -> None:
         ui.notify(msg)
 
     def handle_login() -> None:
-        nonlocal login_card, main_layout
         try:
             push_status("Checking login...")
             fetch_calibration_data(
@@ -100,24 +103,18 @@ def main() -> None:
                     "api_key": api_key.value,
                 }
             )
-            login_card.visible = False
-            show_main_ui()
-            fetch_data()
+            ui.open("/app")
             push_status("Login successful")
         except Exception as e:  # pragma: no cover - UI only
             push_status(f"Login failed: {e}")
 
     def logout() -> None:
-        nonlocal selected_row, current_image, footer
+        nonlocal selected_row, current_image
         push_status("Logged out")
         stored_login.clear()
         selected_row = None
         current_image = None
-        if main_layout:
-            main_layout.clear()
-        login_card.visible = True
-        if footer:
-            footer.visible = False
+        ui.open("/")
 
     def fetch_data() -> None:
         nonlocal selected_row
@@ -198,7 +195,7 @@ def main() -> None:
             push_status(f"Print error: {e}")
 
     def show_main_ui() -> None:
-        nonlocal status_log, label_img, print_button, label_card, device_table, main_layout, footer, empty_table_label
+        nonlocal status_log, label_img, print_button, label_card, device_table, main_layout, empty_table_label
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
@@ -217,41 +214,45 @@ def main() -> None:
                         label_img = ui.image("").classes("q-mb-md").style("max-width:260px;")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
-        footer.visible = True
+        footer = ui.footer().classes("bg-grey-2 shadow-2")
+        with footer:
+            expansion = ui.expansion("Status anzeigen", value=False)
+            with expansion:
+                status_log = ui.log(max_lines=100)
 
-    # ----- Login card -----
-    login_card = ui.card().style("max-width:420px;margin:80px auto;")
-    with login_card:
-        ui.label("calServer Labeltool").classes("text-h5 text-center q-mb-md")
+    @ui.page("/")
+    def login_page() -> None:
+        nonlocal base_url, username, password, api_key
+        login_card = ui.card().style("max-width:420px;margin:80px auto;")
+        with login_card:
+            ui.label("calServer Labeltool").classes("text-h5 text-center q-mb-md")
 
-        # Prefill login fields in development mode. The DOMAIN environment
-        # variable determines the default URL. If APP_ENV is set to
-        # ``development`` additional credentials are populated as well.
-        is_dev = os.getenv("APP_ENV") == "development"
-        if is_dev:
-            domain = os.getenv("DOMAIN", "demo.net-cal.com")
-        else:
-            domain = os.getenv("DOMAIN", "calserver.example.com")
-        default_url = domain if domain.startswith("http") else f"https://{domain}"
-        base_url = ui.input("API URL", value=default_url).props("outlined")
-        username = ui.input(
-            "Benutzername",
-            value="api-demo@calhelp.de" if is_dev else "",
-        ).props("outlined")
-        password = ui.input("Passwort", password=True).props("outlined")
-        api_key = ui.input(
-            "API Key",
-            password=True,
-            value="53f1871505fa8190659aaae17845bd19" if is_dev else "",
-        ).props("outlined")
-        ui.button("Login", on_click=handle_login).props("color=primary")
+            # Prefill login fields in development mode. The DOMAIN environment
+            # variable determines the default URL. If APP_ENV is set to
+            # ``development`` additional credentials are populated as well.
+            is_dev = os.getenv("APP_ENV") == "development"
+            if is_dev:
+                domain = os.getenv("DOMAIN", "demo.net-cal.com")
+            else:
+                domain = os.getenv("DOMAIN", "calserver.example.com")
+            default_url = domain if domain.startswith("http") else f"https://{domain}"
+            base_url = ui.input("API URL", value=default_url).props("outlined")
+            username = ui.input(
+                "Benutzername",
+                value="api-demo@calhelp.de" if is_dev else "",
+            ).props("outlined")
+            password = ui.input("Passwort", password=True).props("outlined")
+            api_key = ui.input(
+                "API Key",
+                password=True,
+                value="53f1871505fa8190659aaae17845bd19" if is_dev else "",
+            ).props("outlined")
+            ui.button("Login", on_click=handle_login).props("color=primary")
 
-    footer = ui.footer().classes("bg-grey-2 shadow-2")
-    footer.visible = False
-    with footer:
-        expansion = ui.expansion("Status anzeigen", value=False)
-        with expansion:
-            status_log = ui.log(max_lines=100)
+    @ui.page("/app")
+    def main_page() -> None:
+        show_main_ui()
+        fetch_data()
 
     ui.run(port=8080, show=False)
 
