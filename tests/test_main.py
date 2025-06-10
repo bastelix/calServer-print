@@ -44,3 +44,12 @@ def test_build_table_kwargs_optional_pagination():
 def test_build_table_kwargs_selection():
     kwargs_c = main._build_table_kwargs(dummy_table_c, [], None)
     assert kwargs_c.get('selection') == 'single'
+
+
+def test_pil_to_data_url_prefix():
+    class DummyImg:
+        def save(self, buffer, format=None):
+            buffer.write(b'test')
+
+    result = main._pil_to_data_url(DummyImg())
+    assert result.startswith('data:image/png;base64,')
