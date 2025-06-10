@@ -236,7 +236,15 @@ def main() -> None:
     def on_select(e) -> None:
         nonlocal selected_row
         key = getattr(e, "selection", None)
-        row_data = next((r for r in table_rows if r.get("I4201") == key), None)
+        if key is None:
+            key = getattr(e, "args", None)
+            if isinstance(key, list):
+                key = key[0] if key else None
+        row_data = None
+        if isinstance(key, dict):
+            row_data = key
+        else:
+            row_data = next((r for r in table_rows if r.get("I4201") == key), None)
         selected_row = row_data
         update_label(row_data)
 
