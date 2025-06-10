@@ -274,7 +274,7 @@ def main() -> None:
         nonlocal current_image, selected_row
         if not row:
             label_svg.content = render_preview(selected_template, "", "", "")
-            placeholder_label.visible = False
+            placeholder_label.visible = True
             print_button.disable()
             row_info_label.set_text("Keine Zeile ausgewählt")
             return
@@ -291,19 +291,37 @@ def main() -> None:
 
     # Zeilen finden
     def _find_row(key: Any) -> Dict[str, Any] | None:
-        if isinstance(key, dict): key = key.get("I4201")
+        if isinstance(key, dict):
+            if "I4201" in key:
+                key = key.get("I4201")
+            elif "row" in key and isinstance(key["row"], dict):
+                key = key["row"].get("I4201")
         return next((r for r in table_rows if r["I4201"] == key), None)
 
     # Auswahl-Handler
     def on_select(e: Any) -> None:
-        sel = getattr(e,"selection", None) or (getattr(e,"args", None) or [None])[0]
-        row = _find_row(sel)
+        sel = getattr(e, "selection", None)
+        args = getattr(e, "args", None)
+        row = None
+        if isinstance(args, dict):
+            row = args.get("row") or (args.get("rows") or [None])[0]
+        elif isinstance(args, list) and args:
+            row = args[-1]
+        if row is None:
+            row = _find_row(sel)
+        else:
+            row = _find_row(row)
         update_label(row)
 
     # Klick auf Zeile
     def handle_row_click(e: Any) -> None:
-        row_key = (getattr(e,"args",None) or [None])[0]
-        row = _find_row(row_key)
+        data = getattr(e, "args", None)
+        row = None
+        if isinstance(data, dict):
+            row = data.get("row")
+        elif isinstance(data, list) and data:
+            row = data[-1]
+        row = _find_row(row)
         update_label(row)
 
     # Klick auf Vorschau-Zelle
