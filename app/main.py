@@ -1,10 +1,8 @@
 """NiceGUI based label printing application with login and device table."""
 
 from __future__ import annotations
-
 import base64
 import io
-import json
 import os
 import inspect
 from typing import Any, Dict, List
@@ -12,12 +10,13 @@ from typing import Any, Dict, List
 from PIL import Image
 from nicegui import ui
 
+# Eigene Module importieren
 try:
     from .calserver_api import fetch_calibration_data
     from .label_templates import device_label, device_label_svg
     from .qrcode_utils import generate_qr_code, generate_qr_code_svg
     from .print_utils import print_label
-except ImportError:  # pragma: no cover - running as script
+except ImportError:
     from calserver_api import fetch_calibration_data
     from label_templates import device_label, device_label_svg
     from qrcode_utils import generate_qr_code, generate_qr_code_svg
@@ -32,10 +31,13 @@ def _pil_to_data_url(image: Image.Image) -> str:
     return f"data:image/png;base64,{data}"
 
 
-def _build_table_kwargs(table_func, rows: List[Dict[str, Any]], on_select) -> Dict[str, Any]:
-    """Return kwargs for ``ui.table`` with optional parameters."""
-
-    kwargs = dict(
+def _build_table_kwargs(
+    table_func: Any,
+    rows: List[Dict[str, Any]],
+    on_select: Any,
+) -> Dict[str, Any]:
+    """Return kwargs for `ui.table` with optional parameters."""
+    kwargs: Dict[str, Any] = dict(
         columns=[
             {"name": "I4201", "label": "Gerätename", "field": "I4201"},
             {"name": "I4202", "label": "Hersteller", "field": "I4202"},
@@ -44,46 +46,26 @@ def _build_table_kwargs(table_func, rows: List[Dict[str, Any]], on_select) -> Di
             {"name": "I4206", "label": "Seriennummer", "field": "I4206"},
             {"name": "C2301", "label": "Kalibrierdatum", "field": "C2301"},
             {"name": "C2303", "label": "Ablaufdatum", "field": "C2303"},
-            {"name": "MTAG", "label": "MTAG", "field": "MTAG"},
-            {
-                "name": "qrcode",
-                "label": "QR-Code",
-                "field": "qrcode",
-                "html": True,
-            },
-            {
-                "name": "preview",
-                "label": "Vorschau",
-                "field": "preview",
-                "html": True,
-            },
+            {"name": "MTAG",  "label": "MTAG",       "field": "MTAG"},
+            {"name": "qrcode",  "label": "QR-Code",   "field": "qrcode"},
+            {"name": "preview", "label": "Vorschau",  "field": "preview"},
         ],
         rows=rows,
         row_key="I4201",
         on_select=on_select,
     )
-
     params = inspect.signature(table_func).parameters
+    # Pagination oder rows_per_page
     if "pagination" in params:
         kwargs["pagination"] = {"rowsPerPage": 10}
-    elif "rows_per_page" in params:
+    elif "rows_per_page" in params or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
         kwargs["rows_per_page"] = 10
-    elif any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
-        kwargs["rows_per_page"] = 10
+    # Suche aktivieren
     if "search" in params:
         kwargs["search"] = True
-    if (
-        "rows_per_page" not in params
-        and "pagination" not in params
-        and not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
-    ):
-        kwargs.pop("rows_per_page", None)
-    if "selection" in params:
+    # Einzel-Selektion
+    if "selection" in params or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
         kwargs["selection"] = "single"
-    if "html_columns" in params:
-        kwargs["html_columns"] = ["qrcode", "preview"]
-    elif any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
-        kwargs["html_columns"] = ["qrcode", "preview"]
     return kwargs
 
 
@@ -92,46 +74,44 @@ def _navigate(path: str) -> None:
     if hasattr(ui, "open"):
         ui.open(path)  # type: ignore[attr-defined]
     elif hasattr(ui, "open_page"):
-        ui.open_page(path)  # pragma: no cover - legacy NiceGUI
+        ui.open_page(path)
     elif hasattr(ui, "navigate") and hasattr(ui.navigate, "to"):
-        ui.navigate.to(path)  # pragma: no cover - future NiceGUI
+        ui.navigate.to(path)
     elif hasattr(ui, "navigate"):
-        ui.navigate(path)  # pragma: no cover - future NiceGUI
-    else:  # pragma: no cover - missing method
+        ui.navigate(path)
+    else:
         raise AttributeError("No navigation method found in nicegui.ui")
 
 
 def main() -> None:
     """Run the NiceGUI label tool."""
-
+    # States
     stored_login: Dict[str, str] = {}
     table_rows: List[Dict[str, Any]] = []
     all_rows: List[Dict[str, Any]] = []
     selected_row: Dict[str, Any] | None = None
     current_image: Image.Image | None = None
 
+    # UI-Elemente
     status_log: ui.log | None = None
     label_svg: ui.html | None = None
     print_button: ui.button | None = None
-    label_card: ui.card | None = None
     placeholder_label: ui.label | None = None
     row_info_label: ui.label | None = None
     device_table: ui.table | None = None
     empty_table_label: ui.label | None = None
-    main_layout: ui.column | None = None
     filter_switch: ui.switch | None = None
     search_input: ui.input | None = None
-    filter_value: int = 1
-    search_value: str = ""
     label_dialog: ui.dialog | None = None
     dialog_label_svg: ui.html | None = None
 
-    # login form elements (initialized on the login page)
+    # Login-Felder
     base_url: ui.input | None = None
     username: ui.input | None = None
     password: ui.input | None = None
     api_key: ui.input | None = None
 
+    # Helper: Status-Log
     def push_status(msg: str) -> None:
         nonlocal status_log
         if status_log:
@@ -141,33 +121,29 @@ def main() -> None:
                 status_log = None
         ui.notify(msg)
 
+    # Login-Handler
     def handle_login() -> None:
+        nonlocal stored_login
         try:
             push_status("Checking login...")
             fetch_calibration_data(
-                base_url.value,
-                username.value,
-                password.value,
-                api_key.value,
-                {},
+                base_url.value, username.value, password.value, api_key.value, {}
             )
-            stored_login.update(
-                {
-                    "base_url": base_url.value,
-                    "username": username.value,
-                    "password": password.value,
-                    "api_key": api_key.value,
-                }
-            )
+            stored_login = {
+                "base_url": base_url.value,
+                "username": username.value,
+                "password": password.value,
+                "api_key": api_key.value,
+            }
             _navigate("/app")
             push_status("Login successful")
-        except Exception as e:  # pragma: no cover - UI only
+        except Exception as e:
             push_status(f"Login failed: {e}")
 
+    # Logout-Handler
     def logout() -> None:
-        nonlocal selected_row, current_image
-        nonlocal status_log, label_svg, print_button, label_card, device_table
-        nonlocal placeholder_label, empty_table_label, main_layout, filter_switch, search_input, row_info_label, search_value
+        nonlocal selected_row, current_image, status_log, label_svg, print_button
+        nonlocal device_table, placeholder_label, empty_table_label, row_info_label
         push_status("Logged out")
         stored_login.clear()
         selected_row = None
@@ -175,86 +151,68 @@ def main() -> None:
         status_log = None
         label_svg = None
         print_button = None
-        label_card = None
         device_table = None
         placeholder_label = None
-        row_info_label = None
         empty_table_label = None
-        main_layout = None
-        filter_switch = None
-        search_input = None
-        search_value = ""
+        row_info_label = None
         _navigate("/")
 
+    # Filter-Logik
     def apply_table_filter() -> None:
+        nonlocal table_rows
         table_rows.clear()
         filtered = all_rows
-        if filter_value != 2:
-            filtered = [r for r in filtered if r.get("C2339") == filter_value]
-        if search_value:
+        if filter_switch.value is False:
+            # Nur aktuelle
+            filtered = [r for r in filtered if r.get("C2339") == 1]
+        if search_value := search_input.value:
             sv = search_value.lower()
-            filtered = [r for r in filtered if sv in str(r.get("I4201", "")).lower()]
+            filtered = [
+                r for r in filtered
+                if any(sv in str(r.get(f, "")).lower() for f in ["I4201","I4202","I4203","I4204","I4206","MTAG"])
+            ]
         table_rows.extend(filtered)
         if device_table:
             device_table.update()
         if empty_table_label:
             empty_table_label.visible = len(table_rows) == 0
 
+    # API-Daten laden
     def fetch_data() -> None:
-        nonlocal selected_row, all_rows
+        nonlocal all_rows, selected_row
         try:
             push_status("Fetching data...")
-            if filter_value == 2:
-                filter_payload = {}
-            else:
-                filter_payload = [
-                    {"property": "C2339", "value": filter_value, "operator": "="}
-                ]
+            payload = [] if filter_switch.value else [{"property":"C2339","value":1,"operator":"="}]
             data = fetch_calibration_data(
-                stored_login.get("base_url", base_url.value),
-                stored_login.get("username", username.value),
-                stored_login.get("password", password.value),
-                stored_login.get("api_key", api_key.value),
-                filter_payload,
+                stored_login["base_url"], stored_login["username"],
+                stored_login["password"], stored_login["api_key"], payload
             )
-            if isinstance(data, dict) and isinstance(data.get("data"), dict):
-                cal_list = data["data"].get("calibration", [])
-            elif isinstance(data, list):
-                cal_list = data
-            else:
-                cal_list = [data] if data else []
-            all_rows = []
-            base_domain = stored_login.get("base_url", base_url.value).rstrip("/")
+            cal_list = (
+                data.get("data", {}).get("calibration") if isinstance(data, dict) else data
+            ) or []
+            all_rows.clear()
+            base = stored_login["base_url"].rstrip("/")
             for entry in cal_list:
                 inv = entry.get("inventory") or {}
-                mtag_value = (
-                    entry.get("MTAG")
-                    or entry.get("mtag")
-                    or inv.get("MTAG")
-                    or inv.get("mtag")
-                    or "-"
-                )
-                qr_value = f"{base_domain}/qrcode/{mtag_value}"
-                qr_svg = generate_qr_code_svg(qr_value)
-                all_rows.append(
-                    {
-                        "I4201": inv.get("I4201") or "-",
-                        "I4202": inv.get("I4202") or "-",
-                        "I4203": inv.get("I4203") or "-",
-                        "I4204": inv.get("I4204") or "-",
-                        "I4206": inv.get("I4206") or "-",
-                        "C2301": entry.get("C2301") or "-",
-                        "C2303": entry.get("C2303") or "-",
-                        "MTAG": mtag_value,
-                        "C2339": entry.get("C2339"),
-                        "qrcode": qr_svg,
-                        "preview": "<span class='open-preview' style='cursor:pointer'>Vorschau</span>",
-                    }
-                )
+                mtag = entry.get("MTAG") or inv.get("MTAG") or "-"
+                qr_url = f"{base}/qrcode/{mtag}"
+                qr_svg = generate_qr_code_svg(qr_url)
+                all_rows.append({
+                    "I4201": inv.get("I4201") or "-",
+                    "I4202": inv.get("I4202") or "-",
+                    "I4203": inv.get("I4203") or "-",
+                    "I4204": inv.get("I4204") or "-",
+                    "I4206": inv.get("I4206") or "-",
+                    "C2301": entry.get("C2301") or "-",
+                    "C2303": entry.get("C2303") or "-",
+                    "MTAG":  mtag,
+                    "qrcode": qr_svg,
+                    "preview":"<span style='cursor:pointer;color:blue'>Vorschau</span>",
+                })
             apply_table_filter()
             selected_row = None
             push_status("Data loaded")
-        except Exception as e:  # pragma: no cover - UI only
+        except Exception as e:
             push_status(f"Error fetching data: {e}")
             table_rows.clear()
             if device_table:
@@ -262,192 +220,120 @@ def main() -> None:
             if empty_table_label:
                 empty_table_label.visible = True
 
+    # Label aktualisieren
     def update_label(row: Dict[str, Any] | None) -> None:
-        nonlocal current_image, row_info_label
+        nonlocal current_image
         if not row:
-            current_image = None
-            if label_svg:
-                label_svg.content = device_label_svg("", "", "")
-                label_svg.visible = True
-            if placeholder_label:
-                placeholder_label.visible = False
-            if print_button:
-                print_button.disable()
-            if row_info_label:
-                row_info_label.set_text("Keine Zeile ausgewählt")
-            return
-
-        name = row.get("I4201", "")
-        expiry = row.get("C2303", "")
-        mtag = row.get("MTAG", "")
-        base_domain = stored_login.get("base_url", base_url.value).rstrip("/")
-        qr_value = f"{base_domain}/qrcode/{mtag}"
-        if not mtag or mtag == "-":
-            push_status("MTAG fehlt für ausgewähltes Gerät")
-        if row_info_label:
-            row_info_label.set_text(f"I4201: {name}, C2303: {expiry}")
-        img = device_label(name, expiry, qr_value)
-        current_image = img
-        if label_svg:
-            label_svg.content = device_label_svg(name, expiry, qr_value)
-            label_svg.visible = True
-        if placeholder_label:
+            label_svg.content = device_label_svg("","","")
             placeholder_label.visible = False
-        if print_button:
-            print_button.enable()
-
-    def _find_row(data) -> Dict[str, Any] | None:
-        key = None
-        if isinstance(data, dict):
-            key = data.get("I4201")
-        else:
-            key = data
-        return next((r for r in table_rows if r.get("I4201") == key), None)
-
-    def on_select(e) -> None:
-        nonlocal selected_row
-        key = getattr(e, "selection", None)
-        if key is None:
-            key = getattr(e, "args", None)
-            if isinstance(key, list):
-                key = key[0] if key else None
-        selected_row = _find_row(key)
-        update_label(selected_row)
-
-    def handle_row_click(e) -> None:
-        """Update label preview when a table row is clicked."""
-        nonlocal selected_row
-        row = getattr(e, "args", None)
-        if isinstance(row, list):
-            row = row[0] if row else None
-        selected_row = _find_row(row)
-        update_label(selected_row)
-
-    def open_label_dialog(row: Dict[str, Any] | None) -> None:
-        """Show label preview dialog for the given row."""
-        if not row or not dialog_label_svg or not label_dialog:
+            print_button.disable()
+            row_info_label.set_text("Keine Zeile ausgewählt")
             return
-        name = row.get("I4201", "")
-        expiry = row.get("C2303", "")
-        mtag = row.get("MTAG", "")
-        base_domain = stored_login.get("base_url", base_url.value).rstrip("/")
-        qr_value = f"{base_domain}/qrcode/{mtag}"
-        dialog_label_svg.content = device_label_svg(name, expiry, qr_value)
-        label_dialog.open()
+        name = row["I4201"]
+        expiry = row["C2303"]
+        mtag = row["MTAG"]
+        qr_url = f"{stored_login['base_url'].rstrip('/')}/qrcode/{mtag}"
+        row_info_label.set_text(f"I4201: {name}, C2303: {expiry}")
+        current_image = device_label(name, expiry, qr_url)
+        label_svg.content = device_label_svg(name, expiry, qr_url)
+        placeholder_label.visible = False
+        print_button.enable()
 
-    def handle_cell_click(e) -> None:
-        """Show preview dialog when the preview column is clicked."""
-        data = getattr(e, "args", None)
-        if isinstance(data, dict):
-            col = data.get("column") or {}
-            if col.get("name") == "preview":
-                row = _find_row(data.get("row"))
-                open_label_dialog(row)
+    # Zeilen finden
+    def _find_row(key: Any) -> Dict[str, Any] | None:
+        if isinstance(key, dict): key = key.get("I4201")
+        return next((r for r in table_rows if r["I4201"] == key), None)
 
-    def on_switch_change(e) -> None:
-        nonlocal filter_value
-        filter_value = 1 if getattr(e, "value", False) else 2
-        apply_table_filter()
+    # Auswahl-Handler
+    def on_select(e: Any) -> None:
+        sel = getattr(e,"selection", None) or (getattr(e,"args", None) or [None])[0]
+        row = _find_row(sel)
+        update_label(row)
 
-    def on_search_change(e) -> None:
-        nonlocal search_value
-        search_value = getattr(e, "value", "")
-        apply_table_filter()
+    # Klick auf Zeile
+    def handle_row_click(e: Any) -> None:
+        row_key = (getattr(e,"args",None) or [None])[0]
+        row = _find_row(row_key)
+        update_label(row)
 
+    # Klick auf Vorschau-Zelle
+    def handle_cell_click(e: Any) -> None:
+        data = getattr(e,"args",None)
+        col = data.get("column", {}).get("name") if isinstance(data,dict) else None
+        if col == "preview":
+            row = _find_row(data.get("row") if isinstance(data,dict) else None)
+            dialog_label_svg.content = device_label_svg(row["I4201"], row["C2303"], f"{stored_login['base_url'].rstrip('/')}/qrcode/{row['MTAG']}")
+            label_dialog.open()
+
+    # Drucken
     def do_print() -> None:
-        if not current_image:
-            return
-        try:
-            print_label(current_image, "")
-            push_status("Printed")
-        except Exception as e:  # pragma: no cover - UI only
-            push_status(f"Print error: {e}")
+        if current_image:
+            try:
+                print_label(current_image, "")
+                push_status("Printed")
+            except Exception as e:
+                push_status(f"Print error: {e}")
 
+    # Main UI aufbauen
     def show_main_ui() -> None:
-        nonlocal status_log, label_svg, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_switch, search_input, row_info_label, label_dialog, dialog_label_svg
-        main_layout = ui.column()
-        with main_layout:
+        nonlocal status_log, label_svg, print_button, placeholder_label, row_info_label,
+        nonlocal device_table, empty_table_label, filter_switch, search_input, label_dialog, dialog_label_svg
+        with ui.column():
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
-            search_input = ui.input("Gerätename suchen").props("outlined clearable").classes("q-mt-sm")
-            search_input.on("input", on_search_change)
+            search_input = ui.input("Gerätename suchen").props("outlined clearable").on("input", lambda e: apply_table_filter())
             ui.button("Daten laden", on_click=fetch_data).props("color=primary").classes("q-mt-md")
+            # Dialog
             with ui.dialog() as label_dialog:
                 with ui.card():
-                    dialog_label_svg = ui.html(device_label_svg("", "", "")).style("max-width:260px;")
+                    dialog_label_svg = ui.html(device_label_svg("","","")).style("max-width:260px;")
                     ui.button("Schließen", on_click=label_dialog.close)
-            # table and label preview side by side below controls
+            # Tabelle & Vorschau
             with ui.row().classes("justify-center q-gutter-xl items-start"):
+                # Tabelle
                 with ui.column().style("flex:3;min-width:600px;max-width:900px"):
-                    filter_switch = ui.switch("Nur aktuelle", value=True, on_change=on_switch_change).classes("q-mt-md")
+                    filter_switch = ui.switch("Nur aktuelle", value=True, on_change=lambda e: apply_table_filter()).classes("q-mt-md")
                     ui.label("Nur Aktuelle!").bind_visibility_from(filter_switch, 'value')
                     empty_table_label = ui.label("Noch keine Daten geladen").classes("text-grey text-center q-mt-md")
-                    table_kwargs = _build_table_kwargs(ui.table, table_rows, on_select)
-                    device_table = ui.table(**table_kwargs).classes("q-mt-md")
+                    device_table = ui.table(**_build_table_kwargs(ui.table, table_rows, on_select)).classes("q-mt-md")
                     device_table.on("row-click", handle_row_click)
                     device_table.on("cell-click", handle_cell_click)
-                    device_table.add_slot(
-                        "body-cell-qrcode",
-                        """
-                        <q-td :props="props">
-                          <div v-html="props.value" />
-                        </q-td>
-                        """,
-                    )
-                    device_table.add_slot(
-                        "body-cell-preview",
-                        """
-                        <q-td :props="props">
-                          <div v-html="props.value" />
-                        </q-td>
-                        """,
-                    )
+                    device_table.add_slot("body-cell-qrcode", """
+                        <q-td :props="props"><div v-html="props.value" /></q-td>
+                    """)
+                    device_table.add_slot("body-cell-preview", """
+                        <q-td :props="props"><div v-html="props.value" /></q-td>
+                    """)
                     empty_table_label.visible = len(table_rows) == 0
-                with ui.column().classes("col-auto").style("min-width:320px"):
-                    label_card = ui.card().style("padding:32px;min-height:260px;")
-                    with label_card:
-                        ui.label("Label-Vorschau").classes("text-h6")
-                        row_info_label = ui.label("Bitte Gerät auswählen").classes("q-mb-md")
-                        placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
-                        placeholder_label.visible = False
-                        label_svg = ui.html(device_label_svg("", "", "")).classes("q-mb-md").style("max-width:260px;")
-                        label_svg.visible = True
-                        print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
-                        print_button.disable()
-        footer = ui.footer().classes("bg-grey-2 shadow-2")
-        with footer:
-            expansion = ui.expansion("Status anzeigen", value=False)
-            with expansion:
-                status_log = ui.log(max_lines=100).style(
-                    "background-color:white;color:black;width:100%;"
-                )
+                # Vorschau rechts
+                with ui.column().style("min-width:320px;"):
+                    ui.card().classes("pa-4").with_content(lambda:
+                        (
+                            ui.label("Label-Vorschau").classes("text-h6"),
+                            row_info_label := ui.label("Bitte Gerät auswählen").classes("q-mb-md"),
+                            placeholder_label := ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md"),
+                            placeholder_label.hide(),
+                            label_svg := ui.html(device_label_svg("","","")).style("max-width:260px;;;"),
+                            print_button := ui.button("Drucken", on_click=do_print).props("color=primary"),
+                            print_button.disable()
+                        )
+                    )
+        # Footer
+        with ui.footer().classes("bg-grey-2 shadow-2"):
+            with ui.expansion("Status anzeigen", value=False):
+                status_log = ui.log(max_lines=100).style("background-color:white;color:black;width:100%;")
 
     @ui.page("/")
     def login_page() -> None:
         nonlocal base_url, username, password, api_key
-        login_card = ui.card().style("max-width:420px;margin:80px auto;")
-        with login_card:
+        with ui.card().style("max-width:420px;margin:80px auto;"):
             ui.label("calServer Labeltool").classes("text-h5 text-center q-mb-md")
-
-            # Prefill login fields in development mode. The DOMAIN environment
-            # variable determines the default URL. If APP_ENV is set to
-            # ``development`` additional credentials are populated as well.
             is_dev = os.getenv("APP_ENV") == "development"
-            if is_dev:
-                domain = os.getenv("DOMAIN", "demo.net-cal.com")
-            else:
-                domain = os.getenv("DOMAIN", "calserver.example.com")
-            default_url = domain if domain.startswith("http") else f"https://{domain}"
+            domain = os.getenv("DOMAIN", "demo.net-cal.com" if is_dev else "calserver.example.com")
+            default_url = f"https://{domain}" if not domain.startswith("http") else domain
             base_url = ui.input("API URL", value=default_url).props("outlined")
-            username = ui.input(
-                "Benutzername",
-                value="api-demo@calhelp.de" if is_dev else "",
-            ).props("outlined")
+            username = ui.input("Benutzername", value="api-demo@calhelp.de" if is_dev else "").props("outlined")
             password = ui.input("Passwort", password=True).props("outlined")
-            api_key = ui.input(
-                "API Key",
-                password=True,
-                value="53f1871505fa8190659aaae17845bd19" if is_dev else "",
-            ).props("outlined")
+            api_key = ui.input("API Key", password=True, value="53f1871505fa8190659aaae17845bd19" if is_dev else "").props("outlined")
             ui.button("Login", on_click=handle_login).props("color=primary")
 
     @ui.page("/app")
@@ -458,5 +344,5 @@ def main() -> None:
     ui.run(port=8080, show=False)
 
 
-if __name__ in {"__main__", "__mp_main__"}:  # pragma: no cover - manual start
+if __name__ == "__main__":
     main()
