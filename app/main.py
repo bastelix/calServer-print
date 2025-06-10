@@ -119,7 +119,7 @@ def main() -> None:
     device_table: ui.table | None = None
     empty_table_label: ui.label | None = None
     main_layout: ui.column | None = None
-    filter_slider: ui.slider | None = None
+    filter_switch: ui.switch | None = None
     search_input: ui.input | None = None
     filter_value: int = 1
     search_value: str = ""
@@ -167,7 +167,7 @@ def main() -> None:
     def logout() -> None:
         nonlocal selected_row, current_image
         nonlocal status_log, label_svg, print_button, label_card, device_table
-        nonlocal placeholder_label, empty_table_label, main_layout, filter_slider, search_input, row_info_label, search_value
+        nonlocal placeholder_label, empty_table_label, main_layout, filter_switch, search_input, row_info_label, search_value
         push_status("Logged out")
         stored_login.clear()
         selected_row = None
@@ -181,7 +181,7 @@ def main() -> None:
         row_info_label = None
         empty_table_label = None
         main_layout = None
-        filter_slider = None
+        filter_switch = None
         search_input = None
         search_value = ""
         _navigate("/")
@@ -344,12 +344,9 @@ def main() -> None:
                 row = _find_row(data.get("row"))
                 open_label_dialog(row)
 
-    def on_slider_change(e) -> None:
+    def on_switch_change(e) -> None:
         nonlocal filter_value
-        try:
-            filter_value = int(getattr(e, "value", e))
-        except Exception:
-            filter_value = 1
+        filter_value = 1 if getattr(e, "value", False) else 2
         apply_table_filter()
 
     def on_search_change(e) -> None:
@@ -367,11 +364,10 @@ def main() -> None:
             push_status(f"Print error: {e}")
 
     def show_main_ui() -> None:
-        nonlocal status_log, label_svg, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_slider, search_input, row_info_label, label_dialog, dialog_label_svg
+        nonlocal status_log, label_svg, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_switch, search_input, row_info_label, label_dialog, dialog_label_svg
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
-            filter_slider = ui.slider(min=0, max=2, step=1, value=1, on_change=on_slider_change).props("label-always").classes("q-mt-md")
             search_input = ui.input("Gerätename suchen", on_input=on_search_change).props("outlined clearable").classes("q-mt-sm")
             ui.button("Daten laden", on_click=fetch_data).props("color=primary").classes("q-mt-md")
             with ui.dialog() as label_dialog:
@@ -381,6 +377,8 @@ def main() -> None:
             # table and label preview side by side below controls
             with ui.row().classes("justify-center q-gutter-xl items-start"):
                 with ui.column().style("flex:3;min-width:600px;max-width:900px"):
+                    filter_switch = ui.switch("Nur aktuelle", value=True, on_change=on_switch_change).classes("q-mt-md")
+                    ui.label("Nur Aktuelle!").bind_visibility_from(filter_switch, 'value')
                     empty_table_label = ui.label("Noch keine Daten geladen").classes("text-grey text-center q-mt-md")
                     table_kwargs = _build_table_kwargs(ui.table, table_rows, on_select)
                     device_table = ui.table(**table_kwargs).classes("q-mt-md")
