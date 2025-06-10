@@ -120,7 +120,9 @@ def main() -> None:
     empty_table_label: ui.label | None = None
     main_layout: ui.column | None = None
     filter_slider: ui.slider | None = None
+    search_input: ui.input | None = None
     filter_value: int = 1
+    search_value: str = ""
     label_dialog: ui.dialog | None = None
     dialog_label_svg: ui.html | None = None
 
@@ -165,7 +167,7 @@ def main() -> None:
     def logout() -> None:
         nonlocal selected_row, current_image
         nonlocal status_log, label_svg, print_button, label_card, device_table
-        nonlocal placeholder_label, empty_table_label, main_layout, filter_slider, row_info_label
+        nonlocal placeholder_label, empty_table_label, main_layout, filter_slider, search_input, row_info_label, search_value
         push_status("Logged out")
         stored_login.clear()
         selected_row = None
@@ -180,14 +182,19 @@ def main() -> None:
         empty_table_label = None
         main_layout = None
         filter_slider = None
+        search_input = None
+        search_value = ""
         _navigate("/")
 
     def apply_table_filter() -> None:
         table_rows.clear()
-        if filter_value == 2:
-            table_rows.extend(all_rows)
-        else:
-            table_rows.extend([r for r in all_rows if r.get("C2339") == filter_value])
+        filtered = all_rows
+        if filter_value != 2:
+            filtered = [r for r in filtered if r.get("C2339") == filter_value]
+        if search_value:
+            sv = search_value.lower()
+            filtered = [r for r in filtered if sv in str(r.get("I4201", "")).lower()]
+        table_rows.extend(filtered)
         if device_table:
             device_table.update()
         if empty_table_label:
@@ -345,6 +352,11 @@ def main() -> None:
             filter_value = 1
         apply_table_filter()
 
+    def on_search_change(e) -> None:
+        nonlocal search_value
+        search_value = getattr(e, "value", "")
+        apply_table_filter()
+
     def do_print() -> None:
         if not current_image:
             return
@@ -355,11 +367,12 @@ def main() -> None:
             push_status(f"Print error: {e}")
 
     def show_main_ui() -> None:
-        nonlocal status_log, label_svg, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_slider, row_info_label, label_dialog, dialog_label_svg
+        nonlocal status_log, label_svg, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_slider, search_input, row_info_label, label_dialog, dialog_label_svg
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
             filter_slider = ui.slider(min=0, max=2, step=1, value=1, on_change=on_slider_change).props("label-always").classes("q-mt-md")
+            search_input = ui.input("Gerätename suchen", on_input=on_search_change).props("outlined clearable").classes("q-mt-sm")
             ui.button("Daten laden", on_click=fetch_data).props("color=primary").classes("q-mt-md")
             with ui.dialog() as label_dialog:
                 with ui.card():
