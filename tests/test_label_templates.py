@@ -65,17 +65,17 @@ label_templates = importlib.import_module("app.label_templates")
 
 
 def test_device_label_contents():
-    img = label_templates.device_label("Device", "123")
+    img = label_templates.device_label("Device", "2025-01-01", "MT123")
 
     assert img.pasted, "QR code not pasted"
     qr, pos = img.pasted[0]
     assert isinstance(qr, DummyQR)
-    assert qr.data == "123"
+    assert qr.data == "MT123"
     assert pos == (280, 10)
 
     texts = [t for _, t in img.drawn_text]
-    assert "Device" in texts[0]
-    assert "ID: 123" in texts[1]
+    assert "Gerät: Device" in texts[0]
+    assert "Ablauf: 2025-01-01" in texts[1]
 
 
 def test_calibration_label_contents():

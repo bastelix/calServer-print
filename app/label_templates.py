@@ -6,18 +6,27 @@ from .qrcode_utils import generate_qr_code
 FONT = ImageFont.load_default()
 
 
-def device_label(name: str, device_id: str) -> Image.Image:
+def device_label(name: str, expiry: str, mtag: str) -> Image.Image:
     """Create a label image for a device.
 
-    The label contains the device name, its identifier and a QR code
-    encoding the identifier.
+    Parameters
+    ----------
+    name:
+        Device name to show on the label.
+    expiry:
+        Expiry date of the calibration/approval.
+    mtag:
+        Value to encode in the QR code.
+
+    The label contains the device name, the expiry date and a QR code
+    encoding the provided ``mtag`` value.
     """
 
     img = Image.new("RGB", (400, 200), color="white")
     draw = ImageDraw.Draw(img)
-    draw.text((10, 10), name, font=FONT, fill="black")
-    draw.text((10, 50), f"ID: {device_id}", font=FONT, fill="black")
-    qr = generate_qr_code(device_id, size=100)
+    draw.text((10, 10), f"Gerät: {name}", font=FONT, fill="black")
+    draw.text((10, 50), f"Ablauf: {expiry}", font=FONT, fill="black")
+    qr = generate_qr_code(mtag, size=100)
     img.paste(qr, (280, 10))
     return img
 
