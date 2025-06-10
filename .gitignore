@@ -3,3 +3,7 @@ release/
 node_modules/
 dist/
 cert/*.pfx
+.env
+certs/
+vhost.d/
+html/

@@ -231,7 +231,12 @@ def main() -> None:
         table_kwargs["search"] = True
     if "rows_per_page" in inspect.signature(ui.table).parameters:
         table_kwargs["rows_per_page"] = 10
-    device_table = ui.table(**table_kwargs).classes("q-mt-lg")
+    try:
+        device_table = ui.table(**table_kwargs).classes("q-mt-lg")
+    except TypeError:  # pragma: no cover - compatibility fallback
+        table_kwargs.pop("search", None)
+        table_kwargs.pop("rows_per_page", None)
+        device_table = ui.table(**table_kwargs).classes("q-mt-lg")
 
     ui.run(port=8080, show=False)
 

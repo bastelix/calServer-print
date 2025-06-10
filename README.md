@@ -78,6 +78,29 @@ npm start
 
 im Fenstermodus ausfuehren.
 
+## 🐳 Docker Compose
+
+Für den produktiven Einsatz liegt ein einfaches Docker‑Compose Setup bei.
+Damit lässt sich die Anwendung zusammen mit einem Nginx‑Reverse‑Proxy und
+automatisch erneuerten Let's‑Encrypt Zertifikaten starten.
+
+1. `.env.example` kopieren und die Werte für `DOMAIN` und
+   `LETSENCRYPT_EMAIL` anpassen:
+
+   ```bash
+   cp .env.example .env
+   # DOMAIN=my.example.com
+   # LETSENCRYPT_EMAIL=admin@my.example.com
+   ```
+
+2. Danach das Setup starten:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+   Die Anwendung ist anschließend unter `https://<DOMAIN>` erreichbar.
+
 ## ♻ Release Build
 
 Die Release-Pakete basieren auf einer gebuendelten Python/NiceGUI-Exe.
