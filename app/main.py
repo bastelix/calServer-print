@@ -128,11 +128,11 @@ def main() -> None:
     # Simple Jinja2 templates for the preview
     jinja_templates = {
         "Standard": """
-<svg width='350' height='200' xmlns='http://www.w3.org/2000/svg'>
+<svg width='400' height='200' xmlns='http://www.w3.org/2000/svg'>
   <rect width='100%' height='100%' fill='white'/>
   <text x='10' y='40' font-size='16'>I4201: {{ I4201 }}</text>
   <text x='10' y='80' font-size='16'>C2303: {{ C2303 }}</text>
-  <g transform='translate(200,40) scale(0.5)'>
+  <g transform='translate(280,10)'>
     {{ QRCODE }}
   </g>
 </svg>
@@ -357,7 +357,7 @@ def main() -> None:
                 with ui.card():
                     dialog_label_svg = ui.html(
                         render_preview(selected_template, "", "", "")
-                    ).style("max-width:420px;")
+                    ).style("max-width:420px;border:1px solid #ccc;padding:4px;")
                     ui.button("Schließen", on_click=label_dialog.close)
             # Tabelle & Vorschau
             # Tabelle & Vorschau im Grid-Layout nebeneinander
@@ -394,7 +394,7 @@ def main() -> None:
                         placeholder_label.visible = False
                         label_svg = ui.html(
                             render_preview(selected_template, "", "", "")
-                        ).style("max-width:420px;")
+                        ).style("max-width:420px;border:1px solid #ccc;padding:4px;")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
         # Footer
