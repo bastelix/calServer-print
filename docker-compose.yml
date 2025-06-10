@@ -9,6 +9,9 @@ services:
       - VIRTUAL_HOST=${DOMAIN}
       - LETSENCRYPT_HOST=${DOMAIN}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - DOMAIN=${DOMAIN}
+      - APP_ENV=${APP_ENV}
+      - APP_CONFIG=${APP_CONFIG}
     restart: always
 
   nginx-proxy:
