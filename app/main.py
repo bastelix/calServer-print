@@ -109,8 +109,12 @@ def main() -> None:
     api_key: ui.input | None = None
 
     def push_status(msg: str) -> None:
+        nonlocal status_log
         if status_log:
-            status_log.push(msg)
+            try:
+                status_log.push(msg)
+            except Exception:
+                status_log = None
         ui.notify(msg)
 
     def handle_login() -> None:
@@ -138,10 +142,21 @@ def main() -> None:
 
     def logout() -> None:
         nonlocal selected_row, current_image
+        nonlocal status_log, label_svg, print_button, label_card, device_table
+        nonlocal placeholder_label, empty_table_label, main_layout, filter_slider
         push_status("Logged out")
         stored_login.clear()
         selected_row = None
         current_image = None
+        status_log = None
+        label_svg = None
+        print_button = None
+        label_card = None
+        device_table = None
+        placeholder_label = None
+        empty_table_label = None
+        main_layout = None
+        filter_slider = None
         _navigate("/")
 
     def apply_table_filter() -> None:
