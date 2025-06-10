@@ -44,6 +44,7 @@ def _build_table_kwargs(table_func, rows: List[Dict[str, Any]], on_select) -> Di
             {"name": "I4206", "label": "Seriennummer", "field": "I4206"},
             {"name": "C2301", "label": "Kalibrierdatum", "field": "C2301"},
             {"name": "C2303", "label": "Ablaufdatum", "field": "C2303"},
+            {"name": "MTAG", "label": "MTAG", "field": "MTAG"},
             {
                 "name": "qrcode",
                 "label": "QR-Code",
