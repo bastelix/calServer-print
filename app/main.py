@@ -9,13 +9,6 @@ import os
 import inspect
 from typing import Any, Dict, List
 
-# Only show calibrations flagged for printing
-# The API expects the filter as a list of objects in the ``filter`` query
-# parameter.
-DEFAULT_FILTER: List[Dict[str, Any]] = [
-    {"property": "C2339", "value": 1, "operator": "="}
-]
-
 from PIL import Image
 from nicegui import ui
 
@@ -94,6 +87,7 @@ def main() -> None:
 
     stored_login: Dict[str, str] = {}
     table_rows: List[Dict[str, Any]] = []
+    all_rows: List[Dict[str, Any]] = []
     selected_row: Dict[str, Any] | None = None
     current_image: Image.Image | None = None
 
@@ -105,6 +99,8 @@ def main() -> None:
     device_table: ui.table | None = None
     empty_table_label: ui.label | None = None
     main_layout: ui.column | None = None
+    filter_slider: ui.slider | None = None
+    filter_value: int = 1
 
     # login form elements (initialized on the login page)
     base_url: ui.input | None = None
@@ -125,7 +121,7 @@ def main() -> None:
                 username.value,
                 password.value,
                 api_key.value,
-                DEFAULT_FILTER,
+                {},
             )
             stored_login.update(
                 {
@@ -148,16 +144,33 @@ def main() -> None:
         current_image = None
         _navigate("/")
 
+    def apply_table_filter() -> None:
+        table_rows.clear()
+        if filter_value == 2:
+            table_rows.extend(all_rows)
+        else:
+            table_rows.extend([r for r in all_rows if r.get("C2339") == filter_value])
+        if device_table:
+            device_table.update()
+        if empty_table_label:
+            empty_table_label.visible = len(table_rows) == 0
+
     def fetch_data() -> None:
-        nonlocal selected_row
+        nonlocal selected_row, all_rows
         try:
             push_status("Fetching data...")
+            if filter_value == 2:
+                filter_payload = {}
+            else:
+                filter_payload = [
+                    {"property": "C2339", "value": filter_value, "operator": "="}
+                ]
             data = fetch_calibration_data(
                 stored_login.get("base_url", base_url.value),
                 stored_login.get("username", username.value),
                 stored_login.get("password", password.value),
                 stored_login.get("api_key", api_key.value),
-                DEFAULT_FILTER,
+                filter_payload,
             )
             if isinstance(data, dict) and isinstance(data.get("data"), dict):
                 cal_list = data["data"].get("calibration", [])
@@ -165,12 +178,10 @@ def main() -> None:
                 cal_list = data
             else:
                 cal_list = [data] if data else []
-            rows = []
+            all_rows = []
             for entry in cal_list:
-                if entry.get("C2339") != 1:
-                    continue
                 inv = entry.get("inventory") or {}
-                rows.append(
+                all_rows.append(
                     {
                         "I4201": inv.get("I4201") or "-",
                         "I4202": inv.get("I4202") or "-",
@@ -180,15 +191,11 @@ def main() -> None:
                         "C2301": entry.get("C2301") or "-",
                         "C2303": entry.get("C2303") or "-",
                         "MTAG": entry.get("MTAG") or inv.get("MTAG") or "-",
+                        "C2339": entry.get("C2339"),
                     }
                 )
-            table_rows.clear()
-            table_rows.extend(rows)
+            apply_table_filter()
             selected_row = None
-            if device_table:
-                device_table.update()
-            if empty_table_label:
-                empty_table_label.visible = len(table_rows) == 0
             push_status("Data loaded")
         except Exception as e:  # pragma: no cover - UI only
             push_status(f"Error fetching data: {e}")
@@ -233,6 +240,14 @@ def main() -> None:
         selected_row = row_data
         update_label(row_data)
 
+    def on_slider_change(e) -> None:
+        nonlocal filter_value
+        try:
+            filter_value = int(getattr(e, "value", e))
+        except Exception:
+            filter_value = 1
+        apply_table_filter()
+
     def do_print() -> None:
         if not current_image:
             return
@@ -243,13 +258,14 @@ def main() -> None:
             push_status(f"Print error: {e}")
 
     def show_main_ui() -> None:
-        nonlocal status_log, label_img, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label
+        nonlocal status_log, label_img, print_button, label_card, device_table, main_layout, empty_table_label, placeholder_label, filter_slider
         main_layout = ui.column()
         with main_layout:
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
             with ui.row().classes("justify-center q-gutter-xl flex-wrap"):
                 with ui.column().style("flex:3;min-width:600px;max-width:900px"):
                     empty_table_label = ui.label("Noch keine Daten geladen").classes("text-grey text-center q-mt-md")
+                    filter_slider = ui.slider(min=0, max=2, step=1, value=1, on_change=on_slider_change).props("label-always").classes("q-mt-md")
                     table_kwargs = _build_table_kwargs(ui.table, table_rows, on_select)
                     device_table = ui.table(**table_kwargs).classes("q-mt-md")
                     empty_table_label.visible = len(table_rows) == 0
