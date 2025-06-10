@@ -13,12 +13,22 @@ from nicegui import ui
 # Eigene Module importieren
 try:
     from .calserver_api import fetch_calibration_data
-    from .label_templates import device_label, device_label_svg
+    from .label_templates import (
+        device_label,
+        device_label_svg,
+        available_label_templates,
+        render_label_template,
+    )
     from .qrcode_utils import generate_qr_code, generate_qr_code_svg
     from .print_utils import print_label
 except ImportError:
     from calserver_api import fetch_calibration_data
-    from label_templates import device_label, device_label_svg
+    from label_templates import (
+        device_label,
+        device_label_svg,
+        available_label_templates,
+        render_label_template,
+    )
     from qrcode_utils import generate_qr_code, generate_qr_code_svg
     from print_utils import print_label
 
@@ -95,6 +105,8 @@ def main() -> None:
     # UI-Elemente
     status_log: ui.log | None = None
     label_svg: ui.html | None = None
+    template_select: ui.select | None = None
+    selected_template: str = "Standard"
     print_button: ui.button | None = None
     placeholder_label: ui.label | None = None
     row_info_label: ui.label | None = None
@@ -226,9 +238,9 @@ def main() -> None:
 
     # Label aktualisieren
     def update_label(row: Dict[str, Any] | None) -> None:
-        nonlocal current_image
+        nonlocal current_image, selected_row
         if not row:
-            label_svg.content = device_label_svg("","","")
+            label_svg.content = render_label_template(selected_template, "", "", "")
             placeholder_label.visible = False
             print_button.disable()
             row_info_label.set_text("Keine Zeile ausgewählt")
@@ -239,9 +251,10 @@ def main() -> None:
         qr_url = f"{stored_login['base_url'].rstrip('/')}/qrcode/{mtag}"
         row_info_label.set_text(f"I4201: {name}, C2303: {expiry}")
         current_image = device_label(name, expiry, qr_url)
-        label_svg.content = device_label_svg(name, expiry, qr_url)
+        label_svg.content = render_label_template(selected_template, name, expiry, qr_url)
         placeholder_label.visible = False
         print_button.enable()
+        selected_row = row
 
     # Zeilen finden
     def _find_row(key: Any) -> Dict[str, Any] | None:
@@ -266,8 +279,19 @@ def main() -> None:
         col = data.get("column", {}).get("name") if isinstance(data,dict) else None
         if col == "preview":
             row = _find_row(data.get("row") if isinstance(data,dict) else None)
-            dialog_label_svg.content = device_label_svg(row["I4201"], row["C2303"], f"{stored_login['base_url'].rstrip('/')}/qrcode/{row['MTAG']}")
+            dialog_label_svg.content = render_label_template(
+                selected_template,
+                row["I4201"],
+                row["C2303"],
+                f"{stored_login['base_url'].rstrip('/')}/qrcode/{row['MTAG']}",
+            )
             label_dialog.open()
+
+    def change_template(e: Any) -> None:
+        nonlocal selected_template
+        if template_select:
+            selected_template = template_select.value
+        update_label(selected_row)
 
     # Drucken
     def do_print() -> None:
@@ -282,6 +306,7 @@ def main() -> None:
     def show_main_ui() -> None:
         nonlocal status_log, label_svg, print_button, placeholder_label, row_info_label
         nonlocal device_table, empty_table_label, filter_switch, search_input, label_dialog, dialog_label_svg
+        nonlocal template_select
         with ui.column():
             ui.button("Logout", on_click=logout).classes("absolute-top-right q-mt-sm q-mr-sm").props("icon=logout flat color=negative")
             search_input = ui.input("Gerätename suchen").props("outlined clearable").on("input", lambda e: apply_table_filter())
@@ -289,7 +314,7 @@ def main() -> None:
             # Dialog
             with ui.dialog() as label_dialog:
                 with ui.card():
-                    dialog_label_svg = ui.html(device_label_svg("","","")).style("max-width:260px;")
+                    dialog_label_svg = ui.html(render_label_template(selected_template, "", "", "")).style("max-width:260px;")
                     ui.button("Schließen", on_click=label_dialog.close)
             # Tabelle & Vorschau
             # Tabelle & Vorschau im Grid-Layout nebeneinander
@@ -314,9 +339,14 @@ def main() -> None:
                     with ui.card().classes("pa-4"):
                         ui.label("Label-Vorschau").classes("text-h6")
                         row_info_label = ui.label("Bitte Gerät auswählen").classes("q-mb-md")
+                        template_select = ui.select(
+                            options=available_label_templates(),
+                            value=selected_template,
+                            on_change=change_template,
+                        ).classes("q-mb-md")
                         placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
                         placeholder_label.visible = False
-                        label_svg = ui.html(device_label_svg("","","")).style("max-width:260px;;;")
+                        label_svg = ui.html(render_label_template(selected_template, "", "", "")).style("max-width:260px;;;")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()
         # Footer

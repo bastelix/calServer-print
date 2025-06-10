@@ -49,6 +49,24 @@ def device_label_svg(name: str, expiry: str, mtag: str) -> str:
     return svg
 
 
+def simple_device_label_svg(name: str, expiry: str, mtag: str) -> str:
+    """Return a simplified SVG representation of a device label."""
+
+    qr_svg = generate_qr_code_svg(mtag)
+
+    svg = f"""
+<svg width='400' height='200' xmlns='http://www.w3.org/2000/svg'>
+  <rect width='100%' height='100%' fill='white'/>
+  <text x='200' y='40' font-size='20' text-anchor='middle'>{name}</text>
+  <text x='200' y='80' font-size='14' text-anchor='middle'>Bis: {expiry}</text>
+  <g transform='translate(150,90)'>
+    {qr_svg}
+  </g>
+</svg>
+"""
+    return svg
+
+
 def calibration_label(date: str, status: str, cert: str, qr_data: str) -> Image.Image:
     """Create a calibration label image.
 
@@ -65,3 +83,21 @@ def calibration_label(date: str, status: str, cert: str, qr_data: str) -> Image.
     qr = generate_qr_code(qr_data, size=100)
     img.paste(qr, (280, 10))
     return img
+
+
+# Mapping of template names to functions returning SVG strings
+LABEL_TEMPLATE_FUNCTIONS = {
+    "Standard": device_label_svg,
+    "Einfach": simple_device_label_svg,
+}
+
+
+def available_label_templates() -> list[str]:
+    """Return the list of available label template names."""
+    return list(LABEL_TEMPLATE_FUNCTIONS.keys())
+
+
+def render_label_template(template: str, name: str, expiry: str, mtag: str) -> str:
+    """Render the given template name using the provided parameters."""
+    func = LABEL_TEMPLATE_FUNCTIONS.get(template, device_label_svg)
+    return func(name, expiry, mtag)
