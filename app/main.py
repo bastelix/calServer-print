@@ -7,6 +7,8 @@ import os
 import inspect
 from typing import Any, Dict, List
 
+import jinja2
+
 from PIL import Image
 from nicegui import ui
 
@@ -122,6 +124,37 @@ def main() -> None:
     username: ui.input | None = None
     password: ui.input | None = None
     api_key: ui.input | None = None
+
+    # Simple Jinja2 templates for the preview
+    jinja_templates = {
+        "Standard": """
+<svg width='350' height='200' xmlns='http://www.w3.org/2000/svg'>
+  <rect width='100%' height='100%' fill='white'/>
+  <text x='10' y='40' font-size='16'>I4201: {{ I4201 }}</text>
+  <text x='10' y='80' font-size='16'>C2303: {{ C2303 }}</text>
+  <g transform='translate(200,40) scale(0.5)'>
+    {{ QRCODE }}
+  </g>
+</svg>
+""",
+        "Modern": """
+<svg width='350' height='200' xmlns='http://www.w3.org/2000/svg'>
+  <rect width='100%' height='100%' fill='white'/>
+  <text x='175' y='40' font-size='20' text-anchor='middle'>{{ I4201 }}</text>
+  <text x='175' y='70' font-size='14' text-anchor='middle'>Ablauf: {{ C2303 }}</text>
+  <g transform='translate(125,90) scale(0.5)'>
+    {{ QRCODE }}
+  </g>
+</svg>
+""",
+    }
+
+    def render_preview(template: str, name: str, expiry: str, qr_data: str) -> str:
+        qr_svg = generate_qr_code_svg(qr_data)
+        if template in jinja_templates:
+            tpl = jinja2.Template(jinja_templates[template])
+            return tpl.render(I4201=name, C2303=expiry, MTAG=qr_data, QRCODE=qr_svg)
+        return render_label_template(template, name, expiry, qr_data)
 
     # enable Tailwind CSS for the login dialog styling
     ui.add_head_html('<script src="https://cdn.tailwindcss.com"></script>')
@@ -240,7 +273,7 @@ def main() -> None:
     def update_label(row: Dict[str, Any] | None) -> None:
         nonlocal current_image, selected_row
         if not row:
-            label_svg.content = render_label_template(selected_template, "", "", "")
+            label_svg.content = render_preview(selected_template, "", "", "")
             placeholder_label.visible = False
             print_button.disable()
             row_info_label.set_text("Keine Zeile ausgewählt")
@@ -251,7 +284,7 @@ def main() -> None:
         qr_url = f"{stored_login['base_url'].rstrip('/')}/qrcode/{mtag}"
         row_info_label.set_text(f"I4201: {name}, C2303: {expiry}")
         current_image = device_label(name, expiry, qr_url)
-        label_svg.content = render_label_template(selected_template, name, expiry, qr_url)
+        label_svg.content = render_preview(selected_template, name, expiry, qr_url)
         placeholder_label.visible = False
         print_button.enable()
         selected_row = row
@@ -279,11 +312,11 @@ def main() -> None:
         col = data.get("column", {}).get("name") if isinstance(data,dict) else None
         if col == "preview":
             row = _find_row(data.get("row") if isinstance(data,dict) else None)
-            dialog_label_svg.content = render_label_template(
+            dialog_label_svg.content = render_preview(
                 selected_template,
                 row["I4201"],
                 row["C2303"],
-                f"{stored_login['base_url'].rstrip('/')}/qrcode/{row['MTAG']}",
+                row["MTAG"]
             )
             label_dialog.open()
 
@@ -315,7 +348,7 @@ def main() -> None:
             with ui.dialog() as label_dialog:
                 with ui.card():
                     dialog_label_svg = ui.html(
-                        render_label_template(selected_template, "", "", "")
+                        render_preview(selected_template, "", "", "")
                     ).style("max-width:420px;")
                     ui.button("Schließen", on_click=label_dialog.close)
             # Tabelle & Vorschau
@@ -341,15 +374,18 @@ def main() -> None:
                     with ui.card().classes("pa-4"):
                         ui.label("Label-Vorschau").classes("text-h6")
                         row_info_label = ui.label("Bitte Gerät auswählen").classes("q-mb-md")
+                        all_templates = list(dict.fromkeys(
+                            list(jinja_templates.keys()) + available_label_templates()
+                        ))
                         template_select = ui.select(
-                            options=available_label_templates(),
+                            options=all_templates,
                             value=selected_template,
                             on_change=change_template,
                         ).classes("q-mb-md")
                         placeholder_label = ui.label("Keine Vorschau verfügbar").classes("text-grey q-mb-md")
                         placeholder_label.visible = False
                         label_svg = ui.html(
-                            render_label_template(selected_template, "", "", "")
+                            render_preview(selected_template, "", "", "")
                         ).style("max-width:420px;")
                         print_button = ui.button("Drucken", on_click=do_print).props("color=primary")
                         print_button.disable()

@@ -76,6 +76,9 @@ Datei im Projektverzeichnis, wird sie beim Start über `launcher.py`
 automatisch mit **python-dotenv** eingelesen. Darin kann z.B. ein Pfad
 für `APP_CONFIG` gesetzt werden.
 
+### Beispielskript
+
+
 ## ⚡ Start als Desktop-App
 
 Im `electron`-Verzeichnis befinden sich die Dateien fuer die Electron-Anwendung. Nach der Installation der Node-Abhaengigkeiten laesst sich die App mit
